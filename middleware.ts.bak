@@ -1,0 +1,30 @@
+import { type NextRequest, NextResponse } from "next/server"
+import { auth } from "@/auth"
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+  const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
+
+  // Public routes
+  const publicRoutes = ["/auth/signin", "/auth/verify", "/setup"]
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next()
+  }
+
+  // In dev mode, allow access to dashboard and other routes without auth
+  if (isDev) {
+    return NextResponse.next()
+  }
+
+  // In production mode, require authentication
+  const session = await auth()
+  if (!session) {
+    return NextResponse.redirect(new URL("/auth/signin", request.url))
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ["/((?!_next|api/auth|static).*)"],
+}

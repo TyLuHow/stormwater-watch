@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "note": "This is a placeholder file. Download MS4 permit boundaries from regional water boards.",
+    "source": "https://gis.data.ca.gov/",
+    "instructions": "Download Phase I MS4 boundaries from CA regional water boards GIS portal. For dev mode, enrichment will use mock data."
+  }
+}
+
+
+
+

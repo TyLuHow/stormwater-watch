@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "note": "This is a placeholder file. Download actual HUC12 watershed boundaries from USGS.",
+    "source": "https://www.usgs.gov/national-hydrography/watershed-boundary-dataset",
+    "instructions": "Download California HUC12 data from USGS and convert to GeoJSON. For dev mode, enrichment will use mock data."
+  }
+}
+
+
+
+

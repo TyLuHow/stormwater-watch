@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "note": "This is a placeholder file. Download CalEnviroScreen 4.0 data from OEHHA.",
+    "source": "https://oehha.ca.gov/calenviroscreen/maps-data",
+    "instructions": "Download CalEnviroScreen 4.0 shapefile and convert to GeoJSON. For dev mode, enrichment will use mock data."
+  }
+}
+
+
+
+

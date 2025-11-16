@@ -1,0 +1,13 @@
+{
+  "type": "FeatureCollection",
+  "features": [],
+  "metadata": {
+    "note": "This is a placeholder file. Download actual California county boundaries from Census TIGER files.",
+    "source": "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/california-counties.geojson",
+    "instructions": "Replace this file with actual geodata. For dev mode, enrichment will use mock data."
+  }
+}
+
+
+
+

@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(PARTNER)
+  createdAt DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+enum Role {
+  ADMIN
+  PARTNER
+}
+
+model Facility {
+  id              String           @id @default(cuid())
+  name            String
+  permitId        String           @unique
+  naics           String?
+  lat             Decimal          @db.Decimal(9, 6)
+  lon             Decimal          @db.Decimal(9, 6)
+  county          String?
+  watershedHuc12  String?
+  ms4             String?
+  receivingWater  String?
+  isInDAC         Boolean          @default(false)
+  enrichedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  lastSeenAt      DateTime         @default(now())
+
+  samples         Sample[]
+  violationEvents ViolationEvent[]
+  alerts          Alert[]
+
+  @@index([county])
+  @@index([watershedHuc12])
+  @@index([ms4])
+  @@index([isInDAC])
+}
+
+model Sample {
+  id              String    @id @default(cuid())
+  facilityId      String
+  facility        Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  sampleDate      DateTime  @db.Date
+  pollutant       String
+  value           Decimal   @db.Decimal(12, 4)
+  unit            String
+  benchmark       Decimal   @db.Decimal(12, 4)
+  benchmarkUnit   String
+  exceedanceRatio Decimal?  @db.Decimal(8, 2)
+  reportingYear   String
+  source          String
+  sourceDocUrl    String?   @db.Text
+  createdAt       DateTime  @default(now())
+
+  @@index([facilityId, pollutant, sampleDate])
+  @@index([reportingYear])
+  @@index([exceedanceRatio])
+}
+
+model ViolationEvent {
+  id            String    @id @default(cuid())
+  facilityId    String
+  facility      Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  pollutant     String
+  firstDate     DateTime  @db.Date
+  lastDate      DateTime  @db.Date
+  count         Int
+  maxRatio      Decimal   @db.Decimal(8, 2)
+  reportingYear String
+  impairedWater Boolean   @default(false)
+  dismissed     Boolean   @default(false)
+  notes         String?   @db.Text
+  createdAt     DateTime  @default(now())
+  alerts        Alert[]
+
+  @@unique([facilityId, pollutant, reportingYear])
+  @@index([facilityId, pollutant, reportingYear])
+  @@index([dismissed])
+}
+
+model Subscription {
+  id                      String           @id @default(cuid())
+  userId                  String
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                    String
+  mode                    SubscriptionMode
+  params                  Json
+  minRatio                Decimal          @default(1.0) @db.Decimal(4, 2)
+  repeatOffenderThreshold Int              @default(2)
+  impairedOnly            Boolean          @default(false)
+  schedule                Schedule
+  delivery                Delivery         @default(EMAIL)
+  active                  Boolean          @default(true)
+  lastRunAt               DateTime?
+  createdAt               DateTime         @default(now())
+  alerts                  Alert[]
+
+  @@index([active, schedule])
+}
+
+enum SubscriptionMode {
+  POLYGON
+  BUFFER
+  JURISDICTION
+}
+
+enum Schedule {
+  DAILY
+  WEEKLY
+}
+
+enum Delivery {
+  EMAIL
+  SLACK
+  BOTH
+}
+
+model Alert {
+  id               String          @id @default(cuid())
+  subscriptionId   String
+  subscription     Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  facilityId       String
+  facility         Facility        @relation(fields: [facilityId], references: [id])
+  violationEventId String?
+  violationEvent   ViolationEvent? @relation(fields: [violationEventId], references: [id])
+  sentAt           DateTime        @default(now())
+  payload          Json
+
+  @@index([sentAt])
+}
+
+model Provenance {
+  id        String   @id @default(cuid())
+  source    String
+  url       String?
+  fileKey   String?
+  checksum  String?
+  fetchedAt DateTime @default(now())
+  notes     String?
+}
+
+model ConfigPollutant {
+  key           String   @id
+  aliases       String[]
+  canonicalUnit String
+  notes         String?  @db.Text
+}

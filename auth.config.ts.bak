@@ -1,0 +1,50 @@
+import type { NextAuthConfig } from "next-auth"
+import Resend from "next-auth/providers/resend"
+import Credentials from "next-auth/providers/credentials"
+
+const DEV_MODE = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
+
+export const authConfig = {
+  providers: DEV_MODE
+    ? [
+        // Use mock credentials provider in dev mode
+        Credentials({
+          credentials: {},
+          authorize: async () => {
+            return { id: "dev-user", email: "dev@example.com", name: "Dev User" }
+          },
+        }),
+      ]
+    : [
+        Resend({
+          from: process.env.NEXTAUTH_FROM_EMAIL || "noreply@stormwaterwatch.org",
+        }),
+      ],
+  pages: {
+    signIn: "/auth/signin",
+    verifyRequest: "/auth/verify",
+  },
+  callbacks: {
+    authorized({ auth, request: { pathname } }) {
+      const isLoggedIn = !!auth?.user
+      const isSetupPage = pathname === "/setup"
+
+      if (isSetupPage) return true
+      if (isLoggedIn) return true
+      return false
+    },
+    async jwt({ token, user, account }) {
+      if (user) {
+        token.role = "PARTNER"
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.role = token.role as string
+      }
+      return session
+    },
+  },
+  trustHost: true,
+} satisfies NextAuthConfig
