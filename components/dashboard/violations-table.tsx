@@ -3,6 +3,7 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
+import type { Decimal } from "@prisma/client/runtime/library"
 
 interface Facility {
   id?: string
@@ -17,7 +18,7 @@ interface Violation {
   pollutant: string
   count?: number
   exceedanceCount?: number
-  maxRatio?: number | string
+  maxRatio?: number | string | Decimal
   severity?: string
   facility: Facility
 }

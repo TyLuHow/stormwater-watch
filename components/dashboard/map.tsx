@@ -34,7 +34,7 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
     // Dynamically import mapbox-gl
     import("mapbox-gl")
       .then((mapboxgl) => {
-        mapboxgl.accessToken = mapboxToken
+        ;(mapboxgl as any).accessToken = mapboxToken
 
         // Use dark style for better mission control aesthetic
         map.current = new mapboxgl.Map({

@@ -183,8 +183,8 @@ export const CasePacketDocument: React.FC<{ data: CasePacketData }> = ({ data })
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Maximum Exceedance Ratio:</Text>
-            <Text style={[styles.value, violation.maxRatio > 2 ? styles.highlight : {}]}>
-              {violation.maxRatio.toFixed(2)}x benchmark
+            <Text style={[styles.value, Number(violation.maxRatio) > 2 ? styles.highlight : {}]}>
+              {Number(violation.maxRatio).toFixed(2)}x benchmark
             </Text>
           </View>
           {violation.impairedWater && (

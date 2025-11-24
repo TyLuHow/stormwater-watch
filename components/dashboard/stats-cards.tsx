@@ -3,6 +3,7 @@
 import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { BarChart3, AlertTriangle, Droplets, MapPin, TrendingUp } from "lucide-react"
+import type { Decimal } from "@prisma/client/runtime/library"
 
 interface Facility {
   id: string
@@ -15,7 +16,7 @@ interface Violation {
   pollutant: string
   facility: Facility
   severity?: string
-  maxRatio?: number | string
+  maxRatio?: number | string | Decimal
   [key: string]: any
 }
 
@@ -54,7 +55,11 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
 
     // Find most severe violation
     const maxExceedance = violations.reduce((max, v) => {
-      const ratio = typeof v.maxRatio === 'string' ? parseFloat(v.maxRatio) : (v.maxRatio || 0)
+      const ratio = typeof v.maxRatio === 'string'
+        ? parseFloat(v.maxRatio)
+        : typeof v.maxRatio === 'object' && v.maxRatio !== null && 'toNumber' in v.maxRatio
+        ? v.maxRatio.toNumber()
+        : (v.maxRatio || 0)
       return ratio > max ? ratio : max
     }, 0)
 

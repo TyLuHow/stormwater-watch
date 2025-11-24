@@ -1,6 +1,7 @@
 // import { auth } from "@/auth"
+import { NextRequest } from "next/server"
 
-export async function middleware(request: Request) {
+export async function middleware(request: NextRequest) {
   const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
   // const session = await auth()
 

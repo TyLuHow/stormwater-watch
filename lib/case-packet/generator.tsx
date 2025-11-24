@@ -56,7 +56,7 @@ export async function generateCasePacket(
         const { getPrecipitationForSamples } = await import("@/lib/providers/precipitation")
         precipitation = await getPrecipitationForSamples(
           samples.map((s) => ({ sampleDate: s.sampleDate, facilityId: s.facilityId })),
-          { lat: violation.facility.lat, lon: violation.facility.lon }
+          { lat: Number(violation.facility.lat), lon: Number(violation.facility.lon) }
         )
       } catch (error) {
         console.warn("Failed to fetch precipitation data for case packet:", error)

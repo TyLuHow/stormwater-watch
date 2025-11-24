@@ -133,7 +133,7 @@ export async function enrichFacility(
 
     const point: Point = {
       type: "Point",
-      coordinates: [facility.lon, facility.lat],
+      coordinates: [Number(facility.lon), Number(facility.lat)],
     }
 
     // County lookup

@@ -4,6 +4,7 @@
  */
 
 import type { Subscription, Facility, ViolationEvent } from "@prisma/client"
+import { Decimal } from "@prisma/client/runtime/library"
 import { isWithinBuffer, isWithinPolygon } from "@/lib/enrichment/spatial"
 
 export interface MatchResult {
@@ -203,7 +204,7 @@ export async function testSubscriptionMatch(
     name: "Test",
     mode,
     params: params as any,
-    minRatio: 1.0,
+    minRatio: new Decimal(1.0),
     repeatOffenderThreshold: 1,
     impairedOnly: false,
     schedule: "DAILY",
@@ -221,7 +222,7 @@ export async function testSubscriptionMatch(
     firstDate: new Date(),
     lastDate: new Date(),
     count: 1,
-    maxRatio: 2.0,
+    maxRatio: new Decimal(2.0),
     reportingYear: "2024",
     impairedWater: false,
     dismissed: false,
