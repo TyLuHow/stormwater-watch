@@ -128,7 +128,7 @@ async function main() {
         lon: new Decimal(facData.lon.toString()),
         receivingWater: facData.county === "Alameda" ? "San Francisco Bay" : "San Francisco Bay",
         watershedHuc12: facData.county === "Alameda" ? "180500020401" : "180500020301",
-        ms4Jurisdiction: facData.county === "Alameda" ? "Oakland" : facData.county === "Santa Clara" ? "San Jose" : "Richmond",
+        ms4: facData.county === "Alameda" ? "Oakland" : facData.county === "Santa Clara" ? "San Jose" : "Richmond",
         isInDAC: Math.random() > 0.6, // 40% chance of being in disadvantaged community
       },
     })

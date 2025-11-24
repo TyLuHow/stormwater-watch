@@ -62,10 +62,10 @@ export default async function DashboardPage({
       violations = violations.filter((v) => !v.dismissed)
     }
     if (dateFrom) {
-      violations = violations.filter((v) => new Date(v.sampleDate) >= dateFrom)
+      violations = violations.filter((v) => new Date(v.firstDate) >= dateFrom)
     }
     if (dateTo) {
-      violations = violations.filter((v) => new Date(v.sampleDate) <= dateTo)
+      violations = violations.filter((v) => new Date(v.lastDate) <= dateTo)
     }
 
     facilities = mockFacilities
@@ -77,13 +77,13 @@ export default async function DashboardPage({
       ...(pollutant && { pollutant }),
       ...(counties.length > 0 && { facility: { county: { in: counties } } }),
       ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
-      ...(huc12s.length > 0 && { facility: { huc12: { in: huc12s } } }),
-      ...(ms4s.length > 0 && { facility: { ms4Jurisdiction: { in: ms4s } } }),
+      ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
+      ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
       ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
       ...(minRatio > 1.0 && { maxRatio: { gte: minRatio } }),
       ...(impairedOnly && { impairedWater: true }),
-      ...(dateFrom && { sampleDate: { gte: dateFrom } }),
-      ...(dateTo && { sampleDate: { lte: dateTo } }),
+      ...(dateFrom && { firstDate: { gte: dateFrom } }),
+      ...(dateTo && { lastDate: { lte: dateTo } }),
     }
     
     // Remove undefined values
@@ -120,12 +120,12 @@ export default async function DashboardPage({
     : await prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }).then(r => r.map(x => x.pollutant).filter(Boolean))
     
   const availableHuc12s = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.huc12).filter(Boolean))]
-    : await prisma.facility.findMany({ select: { huc12: true }, distinct: ['huc12'] }).then(r => r.map(x => x.huc12).filter(Boolean))
+    ? [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean))]
+    : await prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }).then(r => r.map(x => x.watershedHuc12).filter(Boolean))
     
   const availableMs4s = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.ms4Jurisdiction).filter(Boolean))]
-    : await prisma.facility.findMany({ select: { ms4Jurisdiction: true }, distinct: ['ms4Jurisdiction'] }).then(r => r.map(x => x.ms4Jurisdiction).filter(Boolean))
+    ? [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean))]
+    : await prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }).then(r => r.map(x => x.ms4).filter(Boolean))
     
   const availableYears = DEV_MODE
     ? [...new Set(mockViolations.map(v => v.reportingYear.toString()))]

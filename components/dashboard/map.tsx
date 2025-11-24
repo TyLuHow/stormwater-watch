@@ -52,8 +52,8 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
         facilities.forEach((facility) => {
           const violations_ = violations.filter((v) => v.facilityId === facility.id)
 
-          // Determine color and size based on severity
-          const hasCritical = violations_.some((v) => v.severity === "HIGH")
+          // Determine color and size based on severity (high ratio or impaired water)
+          const hasCritical = violations_.some((v) => Number(v.maxRatio) >= 2.0 || v.impairedWater)
           const color = hasCritical ? "#dc2626" : "#ea580c"
           const scale = hasCritical ? 1.2 : 1
 

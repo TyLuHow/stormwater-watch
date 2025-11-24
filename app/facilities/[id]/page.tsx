@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
-import { AlertTriangle, MapPin, Water } from "lucide-react"
+import { AlertTriangle, MapPin } from "lucide-react"
 
 export default async function FacilityPage({ params }: { params: { id: string } }) {
   const facility = await prisma.facility.findUnique({
