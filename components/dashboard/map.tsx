@@ -5,16 +5,22 @@ import { AlertTriangle } from "lucide-react"
 import type { Facility, ViolationEvent } from "@prisma/client"
 import type { Decimal } from "@prisma/client/runtime/library"
 
-// Allow both mock data (number) and Prisma data (Decimal) for coordinates
+// Allow both mock data (number) and Prisma data (Decimal) for coordinates and maxRatio
 type FlexibleFacility = Omit<Facility, 'lat' | 'lon'> & {
   lat: Decimal | number
   lon: Decimal | number
   [key: string]: any
 }
 
+type FlexibleViolation = Omit<ViolationEvent, 'maxRatio'> & {
+  maxRatio: Decimal | number
+  facility: FlexibleFacility
+  [key: string]: any
+}
+
 interface DashboardMapProps {
   facilities: FlexibleFacility[]
-  violations: (ViolationEvent & { facility: FlexibleFacility })[]
+  violations: FlexibleViolation[]
 }
 
 export function DashboardMap({ facilities, violations }: DashboardMapProps) {
