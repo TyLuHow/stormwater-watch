@@ -43,7 +43,7 @@ export interface CountyFeature extends Feature<Polygon | MultiPolygon> {
 export interface HUC12Feature extends Feature<Polygon | MultiPolygon> {
   properties: {
     HUC12: string
-    NAME?: string
+    NAME: string
     [key: string]: any
   }
 }

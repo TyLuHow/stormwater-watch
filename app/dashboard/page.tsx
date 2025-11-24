@@ -53,7 +53,7 @@ export default async function DashboardPage({
       violations = violations.filter((v) => years.includes(v.reportingYear.toString()))
     }
     if (minRatio > 1.0) {
-      violations = violations.filter((v) => v.maxRatio >= minRatio)
+      violations = violations.filter((v) => Number(v.maxRatio) >= minRatio)
     }
     if (impairedOnly) {
       violations = violations.filter((v) => v.severity === "HIGH")
