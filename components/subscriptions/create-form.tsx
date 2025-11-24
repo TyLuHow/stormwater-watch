@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,9 +11,22 @@ import { Slider } from "@/components/ui/slider"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { toast } from "@/hooks/use-toast"
-import { MapWithDrawControls } from "./map-with-draw"
 import type { FeatureCollection } from "geojson"
 import { useRouter } from "next/navigation"
+
+// Dynamically import MapWithDrawControls with SSR disabled
+// Mapbox GL JS requires the window object and must be rendered client-side only
+const MapWithDrawControls = dynamic(
+  () => import("./map-with-draw").then((mod) => ({ default: mod.MapWithDrawControls })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] w-full border rounded-lg flex items-center justify-center bg-muted">
+        <p className="text-muted-foreground">Loading map...</p>
+      </div>
+    ),
+  }
+)
 
 type SubscriptionMode = "POLYGON" | "BUFFER" | "JURISDICTION"
 

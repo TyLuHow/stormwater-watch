@@ -1,7 +1,9 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
-import Map, { NavigationControl, MapRef } from "react-map-gl"
+// react-map-gl v8+ requires specific import paths for each map library
+// Use 'react-map-gl/mapbox' for mapbox-gl >= 3.5.0
+import Map, { NavigationControl, MapRef } from "react-map-gl/mapbox"
 import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css"
 import type { FeatureCollection } from "geojson"
