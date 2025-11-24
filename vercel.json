@@ -1,22 +1,6 @@
 {
   "framework": "nextjs",
   "buildCommand": "prisma generate && next build",
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "SUPABASE_URL": "@supabase_url",
-    "SUPABASE_ANON_KEY": "@supabase_anon_key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token",
-    "RESEND_API_KEY": "@resend_api_key",
-    "MAPBOX_TOKEN": "@mapbox_token",
-    "NEXT_PUBLIC_MAPBOX_TOKEN": "@next_public_mapbox_token",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "NEXTAUTH_URL": "@nextauth_url",
-    "CRON_SECRET": "@cron_secret",
-    "NWS_USER_AGENT": "@nws_user_agent",
-    "RESEND_FROM_EMAIL": "@resend_from_email"
-  },
   "crons": [
     {
       "path": "/api/cron/daily",
@@ -28,7 +12,3 @@
     }
   ]
 }
-
-
-
-
