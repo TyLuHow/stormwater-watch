@@ -1,10 +1,18 @@
 import type { NextAuthConfig } from "next-auth"
-import Resend from "next-auth/providers/resend"
+import EmailProvider from "next-auth/providers/email"
 
 export const authConfig = {
   providers: [
-    Resend({
+    EmailProvider({
       from: process.env.NEXTAUTH_FROM_EMAIL || "noreply@stormwaterwatch.org",
+      server: {
+        host: "smtp.resend.com",
+        port: 465,
+        auth: {
+          user: "resend",
+          pass: process.env.RESEND_API_KEY,
+        },
+      },
     }),
   ],
   pages: {

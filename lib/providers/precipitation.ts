@@ -3,7 +3,7 @@
  * Integrates with NOAA/NWS API for observed precipitation data
  */
 
-import { redisClient } from "./providers"
+import { redisClient } from "@/lib/providers"
 import { DEV_MODE } from "@/lib/dev-mode"
 
 export interface PrecipitationData {
