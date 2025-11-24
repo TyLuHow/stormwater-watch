@@ -1,4 +1,4 @@
-import type { NextAuthConfig } from "next-auth"
+import type { NextAuthConfig } from "@auth/core"
 import EmailProvider from "next-auth/providers/email"
 import type { JWT } from "next-auth/jwt"
 import type { Session } from "next-auth"
