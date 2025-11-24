@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { resendClient, supabaseClient } from "@/lib/providers"
 
-export async function POST(req: Request, { params }: { params: { provider: string } }) {
-  const provider = params.provider.toLowerCase()
+export async function POST(req: Request, { params }: { params: Promise<{ provider: string }> }) {
+  const { provider: providerParam } = await params
+  const provider = providerParam.toLowerCase()
 
   try {
     if (provider === "resend") {

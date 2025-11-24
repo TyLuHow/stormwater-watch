@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma"
 
 const DEV_MODE = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   if (!DEV_MODE) {
     const session = await auth()
     if (!session?.user) {
@@ -14,7 +16,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
   try {
     const subscription = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!subscription) {
@@ -29,7 +31,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     await prisma.subscription.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
@@ -39,7 +41,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   if (!DEV_MODE) {
     const session = await auth()
     if (!session?.user) {
@@ -50,7 +54,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   try {
     const body = await req.json()
     const subscription = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!subscription) {
@@ -65,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     const updated = await prisma.subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(body.active !== undefined && { active: body.active }),
         ...(body.name && { name: body.name }),
