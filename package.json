@@ -76,7 +76,7 @@
     "@turf/boolean-point-in-polygon": "^7.2.0",
     "@turf/buffer": "^7.2.0",
     "@turf/turf": "^7.2.0",
-    "@upstash/ratelimit": "^0.7.4",
+    "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "latest",
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
