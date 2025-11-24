@@ -47,8 +47,8 @@ UPSTASH_REDIS_REST_TOKEN="AX..."
 # Development Mode (bypasses auth, uses mock data)
 DEV_MODE="false"
 
-# Mapbox (for facility maps)
-MAPBOX_TOKEN="pk.eyJ..."
+# Mapbox (for facility maps and subscription drawing)
+NEXT_PUBLIC_MAPBOX_TOKEN="pk.eyJ..."
 
 # NOAA/NWS API (precipitation data)
 NWS_USER_AGENT="(Contact)your-email@domain.org (Stormwater Watch)"
@@ -419,6 +419,26 @@ The application now requires all TypeScript to type-check. Fix errors before dep
 pnpm build
 ```
 
+### react-map-gl module resolution errors
+
+**Error:** `Module not found: Can't resolve 'react-map-gl'`
+
+**Cause:** react-map-gl v8+ requires specific import paths for different map libraries. The generic 'react-map-gl' import is deprecated.
+
+**Solution:** Import from the specific endpoint:
+```typescript
+// Correct (for mapbox-gl >= 3.5.0)
+import Map from 'react-map-gl/mapbox';
+
+// Incorrect (old syntax)
+import Map from 'react-map-gl';
+```
+
+**Additional considerations:**
+- Use Next.js `dynamic()` import with `ssr: false` for Mapbox components
+- Mapbox GL requires the `window` object and cannot be server-side rendered
+- This is already implemented in `/components/subscriptions/map-with-draw.tsx`
+
 ### Geodata not loading
 
 1. Check files exist in `public/geodata/`
@@ -505,7 +525,7 @@ UPSTASH_REDIS_REST_URL=https://...
 UPSTASH_REDIS_REST_TOKEN=AX...
 
 # === Features ===
-MAPBOX_TOKEN=pk.eyJ...
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ...
 NWS_USER_AGENT="(Contact)your-email (Stormwater Watch)"
 SLACK_WEBHOOK_URL=https://hooks.slack.com/...
 
