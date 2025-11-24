@@ -111,8 +111,8 @@ export default async function DashboardPage({
   }
 
   // Get available filter options
-  const availableCounties = DEV_MODE 
-    ? [...new Set(mockFacilities.map(f => f.county))]
+  const availableCounties = DEV_MODE
+    ? [...new Set(mockFacilities.map(f => f.county).filter(Boolean))]
     : await prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }).then(r => r.map(x => x.county).filter(Boolean))
   
   const availablePollutants = DEV_MODE
