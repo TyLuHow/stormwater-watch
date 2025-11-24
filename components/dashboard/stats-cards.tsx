@@ -6,7 +6,7 @@ import { BarChart3, AlertTriangle, Droplets, MapPin, TrendingUp } from "lucide-r
 
 interface Facility {
   id: string
-  county: string
+  county: string | null
   [key: string]: any
 }
 
@@ -15,7 +15,7 @@ interface Violation {
   pollutant: string
   facility: Facility
   severity?: string
-  maxRatio?: number
+  maxRatio?: number | string
   [key: string]: any
 }
 
@@ -49,12 +49,12 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
         }
         return acc
       },
-      [] as { county: string; count: number }[],
+      [] as { county: string | null; count: number }[],
     )
 
     // Find most severe violation
     const maxExceedance = violations.reduce((max, v) => {
-      const ratio = v.maxRatio || 0
+      const ratio = typeof v.maxRatio === 'string' ? parseFloat(v.maxRatio) : (v.maxRatio || 0)
       return ratio > max ? ratio : max
     }, 0)
 

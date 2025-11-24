@@ -224,12 +224,12 @@ export default async function DashboardPage({
                       }
                       return acc
                     },
-                    [] as { county: string; count: number }[],
+                    [] as { county: string | null; count: number }[],
                   ).sort((a, b) => b.count - a.count).slice(0, 8)
 
                   return byCounty.length > 0 ? (
                     byCounty.map((item, i) => (
-                      <div key={item.county} className="flex items-center justify-between group hover:bg-muted/50 -mx-4 px-4 py-2 rounded-lg transition-colors">
+                      <div key={item.county || `unknown-${i}`} className="flex items-center justify-between group hover:bg-muted/50 -mx-4 px-4 py-2 rounded-lg transition-colors">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-muted-foreground w-6">
                             #{i + 1}

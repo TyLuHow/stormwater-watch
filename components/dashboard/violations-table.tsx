@@ -7,7 +7,7 @@ import Link from "next/link"
 interface Facility {
   id?: string
   name: string
-  county: string
+  county: string | null
   [key: string]: any
 }
 
