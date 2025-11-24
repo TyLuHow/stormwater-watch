@@ -3,10 +3,18 @@
 import { useEffect, useRef, useState } from "react"
 import { AlertTriangle } from "lucide-react"
 import type { Facility, ViolationEvent } from "@prisma/client"
+import type { Decimal } from "@prisma/client/runtime/library"
+
+// Allow both mock data (number) and Prisma data (Decimal) for coordinates
+type FlexibleFacility = Omit<Facility, 'lat' | 'lon'> & {
+  lat: Decimal | number
+  lon: Decimal | number
+  [key: string]: any
+}
 
 interface DashboardMapProps {
-  facilities: (Facility & { [key: string]: any })[]
-  violations: (ViolationEvent & { facility: Facility & { [key: string]: any } })[]
+  facilities: FlexibleFacility[]
+  violations: (ViolationEvent & { facility: FlexibleFacility })[]
 }
 
 export function DashboardMap({ facilities, violations }: DashboardMapProps) {

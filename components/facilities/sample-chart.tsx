@@ -6,7 +6,7 @@ import { format } from "date-fns"
 import type { Sample } from "@prisma/client"
 
 interface SampleChartProps {
-  samples: Array<Sample & { exceedanceRatio?: number | null }>
+  samples: Sample[]
   pollutant: string
 }
 
