@@ -16,6 +16,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:pollutants": "tsx prisma/seed-pollutants.ts",
+    "db:seed:test-data": "tsx prisma/seed-test-data.ts",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
@@ -28,7 +30,11 @@
     "supabase:diff": "supabase db diff",
     "supabase:status": "supabase status",
     "test:health": "curl http://localhost:3000/api/health",
-    "test:build": "npm run type-check && npm run lint && npm run build"
+    "test:build": "npm run type-check && npm run lint && npm run build",
+    "check:env": "node scripts/check-env.js",
+    "check:health": "./scripts/health-check.sh",
+    "check:all": "npm run check:env && npm run check:health",
+    "validate": "npm run check:env && npm run type-check && npm run lint"
   },
   "dependencies": {
     "@auth/core": "latest",

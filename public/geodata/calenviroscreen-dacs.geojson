@@ -1,13 +1,15 @@
 {
   "type": "FeatureCollection",
   "features": [],
-  "metadata": {
-    "note": "This is a placeholder file. Download CalEnviroScreen 4.0 data from OEHHA.",
-    "source": "https://oehha.ca.gov/calenviroscreen/maps-data",
-    "instructions": "Download CalEnviroScreen 4.0 shapefile and convert to GeoJSON. For dev mode, enrichment will use mock data."
-  }
+  "_note": "MANUAL DOWNLOAD AND CONVERSION REQUIRED",
+  "_instructions": "Download CalEnviroScreen 4.0 shapefile and convert to GeoJSON:",
+  "_url": "https://oehha.ca.gov/calenviroscreen/maps-data/download-data",
+  "_steps": [
+    "1. Download calenviroscreen40shpf2021shp.zip from OEHHA website",
+    "2. Extract the shapefile components (.shp, .shx, .dbf, .prj, etc.)",
+    "3. Filter for CIscoreP >= 75 (disadvantaged communities)",
+    "4. Convert to GeoJSON using ogr2ogr: ogr2ogr -f GeoJSON calenviroscreen-dacs.geojson calenviroscreen40shpf2021shp.shp -where \"CIscoreP >= 75\"",
+    "5. Or use QGIS to convert and filter",
+    "6. Replace this file with the converted GeoJSON"
+  ]
 }
-
-
-
-

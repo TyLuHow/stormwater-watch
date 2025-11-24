@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { dismissViolation, undismissViolation } from "@/lib/violations/detector"
+import { withRateLimit } from "@/lib/middleware/rate-limit"
 
 export async function POST(req: NextRequest) {
+  return withRateLimit(req, async () => {
   const session = await auth()
 
   if (!session?.user) {
@@ -26,4 +28,5 @@ export async function POST(req: NextRequest) {
     console.error("Dismiss violation error:", error)
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed" }, { status: 500 })
   }
+  });
 }

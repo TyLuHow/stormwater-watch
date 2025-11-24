@@ -1,13 +1,16 @@
 {
   "type": "FeatureCollection",
   "features": [],
-  "metadata": {
-    "note": "This is a placeholder file. Download actual HUC12 watershed boundaries from USGS.",
-    "source": "https://www.usgs.gov/national-hydrography/watershed-boundary-dataset",
-    "instructions": "Download California HUC12 data from USGS and convert to GeoJSON. For dev mode, enrichment will use mock data."
-  }
+  "_note": "MANUAL DOWNLOAD REQUIRED",
+  "_instructions": "Download California HUC12 watersheds from USGS National Map Downloader:",
+  "_url": "https://apps.nationalmap.gov/downloader/",
+  "_steps": [
+    "1. Go to https://apps.nationalmap.gov/downloader/",
+    "2. Search for California",
+    "3. Select Hydrography > Watershed Boundary Dataset (WBD)",
+    "4. Download HU-8 Region 18 (California)",
+    "5. Extract and convert to GeoJSON",
+    "6. Filter for HUC12 level",
+    "7. Replace this file with filtered GeoJSON"
+  ]
 }
-
-
-
-

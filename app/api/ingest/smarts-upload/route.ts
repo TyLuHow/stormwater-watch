@@ -7,8 +7,10 @@ import { normalizeSamples, computeExceedanceRatio } from "@/lib/ingest/normalize
 import { isDuplicate } from "@/lib/utils"
 import { isSameDay } from "@/lib/utils/dates"
 import { Decimal } from "@prisma/client/runtime/library"
+import { withRateLimit } from "@/lib/middleware/rate-limit"
 
 export async function POST(req: NextRequest) {
+  return withRateLimit(req, async () => {
   const session = await auth()
 
   if (!session?.user) {
@@ -144,4 +146,5 @@ export async function POST(req: NextRequest) {
     console.error("Ingestion error:", error)
     return NextResponse.json({ error: error instanceof Error ? error.message : "Ingestion failed" }, { status: 500 })
   }
+  });
 }

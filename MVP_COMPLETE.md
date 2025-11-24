@@ -205,7 +205,7 @@ model Facility {
 ### Features (Optional)
 - `MAPBOX_TOKEN` - For maps
 - `NWS_USER_AGENT` - For precipitation (format: `(Contact)email (App Name)`)
-- `KV_REST_API_URL` & `KV_REST_API_TOKEN` - For Redis caching
+- `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN` - For Redis caching
 - `SLACK_WEBHOOK_URL` - For operational notifications
 
 ### Development

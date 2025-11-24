@@ -1,8 +1,8 @@
 "use client"
 
 import { useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, AlertTriangle, Droplets, TrendingUp } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { BarChart3, AlertTriangle, Droplets, MapPin, TrendingUp } from "lucide-react"
 
 interface Facility {
   id: string
@@ -15,6 +15,7 @@ interface Violation {
   pollutant: string
   facility: Facility
   severity?: string
+  maxRatio?: number
   [key: string]: any
 }
 
@@ -51,71 +52,112 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
       [] as { county: string; count: number }[],
     )
 
+    // Find most severe violation
+    const maxExceedance = violations.reduce((max, v) => {
+      const ratio = v.maxRatio || 0
+      return ratio > max ? ratio : max
+    }, 0)
+
     return {
       total: violations.length,
       impairedWater: violations.filter((v) => v.severity === "HIGH").length,
       byCounty: byCounty.sort((a, b) => b.count - a.count),
       byPollutant: byPollutant.sort((a, b) => b.count - a.count),
+      facilityCount: facilities.length,
+      maxExceedance,
     }
-  }, [violations])
+  }, [violations, facilities])
+
+  // Mission-critical card styling
+  const StatCard = ({
+    label,
+    value,
+    icon: Icon,
+    iconColor,
+    trend,
+    alert = false,
+    className = ""
+  }: {
+    label: string
+    value: string | number
+    icon: any
+    iconColor: string
+    trend?: string
+    alert?: boolean
+    className?: string
+  }) => (
+    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${className} ${alert ? 'pulse-glow border-destructive' : ''}`}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className={`p-3 rounded-lg ${iconColor}`}>
+            <Icon className="w-6 h-6" />
+          </div>
+          {alert && (
+            <span className="badge-critical">Alert</span>
+          )}
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            {label}
+          </p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-4xl font-bold tracking-tight">{value}</p>
+            {trend && (
+              <span className="text-xs text-muted-foreground">
+                {trend}
+              </span>
+            )}
+          </div>
+        </div>
+        {/* Subtle background pattern */}
+        <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
+          <Icon className="w-full h-full" />
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Violations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <BarChart3 className="w-8 h-8 text-muted-foreground mr-3" />
-            <div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 fade-in-scale">
+      <StatCard
+        label="Active Violations"
+        value={stats.total}
+        icon={BarChart3}
+        iconColor="bg-primary/10 text-primary"
+        trend="current monitoring period"
+      />
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Impaired Waters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <AlertTriangle className="w-8 h-8 text-red-600 mr-3" />
-            <div>
-              <p className="text-2xl font-bold">{stats.impairedWater}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        label="Impaired Waters"
+        value={stats.impairedWater}
+        icon={AlertTriangle}
+        iconColor="bg-destructive/10 text-destructive"
+        alert={stats.impairedWater > 0}
+      />
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Top Pollutant</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <Droplets className="w-8 h-8 text-blue-600 mr-3" />
-            <div>
-              <p className="text-2xl font-bold">{stats.byPollutant[0]?.pollutant || "N/A"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        label="Facilities Tracked"
+        value={stats.facilityCount}
+        icon={MapPin}
+        iconColor="bg-accent/10 text-accent"
+        trend="across California"
+      />
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Top County</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center">
-            <TrendingUp className="w-8 h-8 text-orange-600 mr-3" />
-            <div>
-              <p className="text-2xl font-bold">{stats.byCounty[0]?.county || "N/A"}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <StatCard
+        label="Top Pollutant"
+        value={stats.byPollutant[0]?.pollutant || "—"}
+        icon={Droplets}
+        iconColor="bg-chart-2/10 text-[oklch(var(--chart-2))]"
+        trend={stats.byPollutant[0]?.count ? `${stats.byPollutant[0].count} events` : undefined}
+      />
+
+      <StatCard
+        label="Peak Exceedance"
+        value={stats.maxExceedance > 0 ? `${stats.maxExceedance.toFixed(1)}x` : "—"}
+        icon={TrendingUp}
+        iconColor="bg-destructive/10 text-destructive"
+        trend="above benchmark"
+      />
     </div>
   )
 }

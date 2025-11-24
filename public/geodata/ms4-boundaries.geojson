@@ -1,13 +1,22 @@
 {
   "type": "FeatureCollection",
   "features": [],
-  "metadata": {
-    "note": "This is a placeholder file. Download MS4 permit boundaries from regional water boards.",
-    "source": "https://gis.data.ca.gov/",
-    "instructions": "Download Phase I MS4 boundaries from CA regional water boards GIS portal. For dev mode, enrichment will use mock data."
-  }
+  "_note": "REGIONAL DATA - OBTAIN FROM LOCAL SOURCES",
+  "_instructions": "MS4 boundaries vary by region. Obtain from:",
+  "_sources": [
+    "California Regional Water Quality Control Boards",
+    "County GIS/Open Data portals",
+    "Municipal stormwater program websites"
+  ],
+  "_example_sources": {
+    "San Francisco Bay": "https://www.waterboards.ca.gov/sanfranciscobay/",
+    "Los Angeles": "https://data.lacity.org/",
+    "San Diego": "https://sdgis-sandag.opendata.arcgis.com/",
+    "Regional Board Contact": "https://www.waterboards.ca.gov/waterboards_map.html"
+  },
+  "_notes": [
+    "Each region may have different MS4 boundaries",
+    "Consider combining multiple regional datasets for comprehensive coverage",
+    "Some regions provide MS4 data via ArcGIS online services"
+  ]
 }
-
-
-
-

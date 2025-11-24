@@ -37,8 +37,8 @@ SUPABASE_URL="https://xxx.supabase.co"
 SUPABASE_SERVICE_ROLE_KEY="eyJ..."
 
 # Redis (optional, for caching)
-KV_REST_API_URL="https://xxx.upstash.io"
-KV_REST_API_TOKEN="AX..."
+UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="AX..."
 ```
 
 ### Optional / Feature-Specific
@@ -501,8 +501,8 @@ SUPABASE_SERVICE_ROLE_KEY=eyJ...
 GEODATA_STORAGE_BUCKET=stormwater-geodata
 
 # === Redis (Optional) ===
-KV_REST_API_URL=https://...
-KV_REST_API_TOKEN=AX...
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=AX...
 
 # === Features ===
 MAPBOX_TOKEN=pk.eyJ...

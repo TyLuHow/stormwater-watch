@@ -67,6 +67,9 @@ model Sample {
   @@index([facilityId, pollutant, sampleDate])
   @@index([reportingYear])
   @@index([exceedanceRatio])
+  @@index([facilityId])
+  @@index([pollutant])
+  @@index([sampleDate])
 }
 
 model ViolationEvent {
@@ -88,6 +91,10 @@ model ViolationEvent {
   @@unique([facilityId, pollutant, reportingYear])
   @@index([facilityId, pollutant, reportingYear])
   @@index([dismissed])
+  @@index([facilityId])
+  @@index([pollutant])
+  @@index([reportingYear])
+  @@index([maxRatio])
 }
 
 model Subscription {
@@ -132,13 +139,16 @@ model Alert {
   subscriptionId   String
   subscription     Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   facilityId       String
-  facility         Facility        @relation(fields: [facilityId], references: [id])
+  facility         Facility        @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   violationEventId String?
-  violationEvent   ViolationEvent? @relation(fields: [violationEventId], references: [id])
+  violationEvent   ViolationEvent? @relation(fields: [violationEventId], references: [id], onDelete: Cascade)
   sentAt           DateTime        @default(now())
   payload          Json
 
   @@index([sentAt])
+  @@index([subscriptionId])
+  @@index([facilityId])
+  @@index([violationEventId])
 }
 
 model Provenance {

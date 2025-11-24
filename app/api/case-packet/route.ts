@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateCasePacket, getCasePacketFilename } from "@/lib/case-packet/generator"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { withRateLimit } from "@/lib/middleware/rate-limit"
 
 const RequestSchema = z.object({
   violationEventId: z.string(),
@@ -23,6 +24,7 @@ const RequestSchema = z.object({
  * }
  */
 export async function POST(request: NextRequest) {
+  return withRateLimit(request, async () => {
   try {
     const body = await request.json()
     const validated = RequestSchema.parse(body)
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
+  });
 }
 
 /**
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
  * Same as POST but via GET for simple link-based downloads
  */
 export async function GET(request: NextRequest) {
+  return withRateLimit(request, async () => {
   const searchParams = request.nextUrl.searchParams
   const violationEventId = searchParams.get("violationEventId")
 
@@ -128,6 +132,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+  });
 }
 
 

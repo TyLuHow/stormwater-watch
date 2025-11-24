@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Decimal } from "@prisma/client/runtime/library"
 import { z } from "zod"
+import { withRateLimit } from "@/lib/middleware/rate-limit"
 
 const QuerySchema = z.object({
   pollutants: z.string().optional(),
@@ -23,6 +24,7 @@ const QuerySchema = z.object({
  * Get violations with filtering support
  */
 export async function GET(request: NextRequest) {
+  return withRateLimit(request, async () => {
   try {
     const searchParams = request.nextUrl.searchParams
     const params = QuerySchema.parse(Object.fromEntries(searchParams.entries()))
@@ -178,6 +180,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+  });
 }
 
 
