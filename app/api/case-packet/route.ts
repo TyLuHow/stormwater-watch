@@ -51,8 +51,8 @@ export async function POST(request: NextRequest) {
 
     const filename = getCasePacketFilename(violation.facility, violation)
 
-    // Return PDF
-    return new NextResponse(pdfBuffer, {
+    // Return PDF (convert Buffer to Uint8Array for Edge runtime compatibility)
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
