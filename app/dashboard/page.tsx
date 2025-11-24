@@ -111,23 +111,23 @@ export default async function DashboardPage({
   }
 
   // Get available filter options
-  const availableCounties = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.county).filter(Boolean))]
-    : await prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }).then(r => r.map(x => x.county).filter(Boolean))
-  
-  const availablePollutants = DEV_MODE
+  const availableCounties: string[] = DEV_MODE
+    ? [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
+    : await prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }).then(r => r.map(x => x.county).filter(Boolean) as string[])
+
+  const availablePollutants: string[] = DEV_MODE
     ? [...new Set(mockViolations.map(v => v.pollutant))]
-    : await prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }).then(r => r.map(x => x.pollutant).filter(Boolean))
-    
-  const availableHuc12s = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean))]
-    : await prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }).then(r => r.map(x => x.watershedHuc12).filter(Boolean))
-    
-  const availableMs4s = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean))]
-    : await prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }).then(r => r.map(x => x.ms4).filter(Boolean))
-    
-  const availableYears = DEV_MODE
+    : await prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }).then(r => r.map(x => x.pollutant).filter(Boolean) as string[])
+
+  const availableHuc12s: string[] = DEV_MODE
+    ? [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
+    : await prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }).then(r => r.map(x => x.watershedHuc12).filter(Boolean) as string[])
+
+  const availableMs4s: string[] = DEV_MODE
+    ? [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
+    : await prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }).then(r => r.map(x => x.ms4).filter(Boolean) as string[])
+
+  const availableYears: string[] = DEV_MODE
     ? [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
     : await prisma.violationEvent.findMany({ select: { reportingYear: true }, distinct: ['reportingYear'] }).then(r => r.map(x => x.reportingYear.toString()))
 
