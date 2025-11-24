@@ -38,7 +38,8 @@ export async function GET() {
   try {
     const supabase = createSupabaseClient()
     if (supabase) {
-      await supabase.storage.from("raw").list({ limit: 1 })
+      // Supabase storage.list() requires path as first param, options as second
+      await supabase.storage.from("raw").list("", { limit: 1 })
       checks.push({
         name: "Supabase Storage",
         status: "pass",
