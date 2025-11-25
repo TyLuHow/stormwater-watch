@@ -20,14 +20,6 @@ export const authConfig: NextAuthOptions = {
     verifyRequest: "/auth/verify",
   },
   callbacks: {
-    authorized({ auth, request: { pathname } }: any) {
-      const isLoggedIn = !!auth?.user
-      const isSetupPage = pathname === "/setup"
-
-      if (isSetupPage) return true
-      if (isLoggedIn) return true
-      return false
-    },
     async jwt({ token, user }: any) {
       if (user) {
         token.role = "PARTNER"
