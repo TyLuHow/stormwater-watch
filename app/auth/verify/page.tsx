@@ -1,5 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
+// Disable prerendering since auth is not configured yet
+export const dynamic = 'force-dynamic'
+
 export default function VerifyPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">

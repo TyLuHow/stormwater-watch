@@ -2,6 +2,9 @@
 
 import type React from "react"
 
+// Disable prerendering since auth is not configured yet
+export const dynamic = 'force-dynamic'
+
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
