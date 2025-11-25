@@ -1,7 +1,5 @@
-import type { AuthConfig } from "@auth/core"
+import type { NextAuthConfig } from "next-auth"
 import EmailProvider from "next-auth/providers/email"
-import type { JWT } from "next-auth/jwt"
-import type { Session } from "next-auth"
 
 export const authConfig = {
   providers: [
@@ -22,7 +20,7 @@ export const authConfig = {
     verifyRequest: "/auth/verify",
   },
   callbacks: {
-    authorized({ auth, request: { pathname } }: { auth: any; request: { pathname: string } }) {
+    authorized({ auth, request: { pathname } }: any) {
       const isLoggedIn = !!auth?.user
       const isSetupPage = pathname === "/setup"
 
@@ -30,13 +28,13 @@ export const authConfig = {
       if (isLoggedIn) return true
       return false
     },
-    async jwt({ token, user, account }: { token: JWT; user: any; account: any }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.role = "PARTNER"
       }
       return token
     },
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async session({ session, token }: any) {
       if (session.user) {
         (session.user as any).role = token.role as string
       }
@@ -44,4 +42,4 @@ export const authConfig = {
     },
   },
   trustHost: true,
-} satisfies AuthConfig
+} satisfies NextAuthConfig
