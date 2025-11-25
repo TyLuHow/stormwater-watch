@@ -5,7 +5,7 @@
 
 import * as turf from "@turf/turf"
 import { booleanPointInPolygon } from "@turf/boolean-point-in-polygon"
-import type { Point } from "geojson"
+import type { Point, Feature, Polygon, MultiPolygon } from "geojson"
 import { prisma } from "@/lib/prisma"
 import type {
   EnrichmentResult,
@@ -84,7 +84,7 @@ async function loadGeodata(type: "county" | "huc12" | "dac" | "ms4"): Promise<Ge
 /**
  * Find which polygon contains a point
  */
-function findContainingPolygon<T extends CountyFeature | HUC12Feature | DACFeature | MS4Feature>(
+function findContainingPolygon<T extends Feature<Polygon | MultiPolygon, any>>(
   point: Point,
   features: T[]
 ): T | null {
