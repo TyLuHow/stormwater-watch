@@ -6,6 +6,9 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { DashboardFilters } from "@/components/dashboard/filters"
 import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
 
+// Force dynamic rendering to prevent database access during build
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage({
   searchParams,
 }: {

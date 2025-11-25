@@ -7,6 +7,9 @@ import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
 import { AlertTriangle, MapPin } from "lucide-react"
 
+// Force dynamic rendering to prevent database access during build
+export const dynamic = 'force-dynamic'
+
 export default async function FacilityPage({ params }: { params: { id: string } }) {
   const facility = await prisma.facility.findUnique({
     where: { id: params.id },

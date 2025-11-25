@@ -4,6 +4,9 @@ import { CreateSubscriptionForm } from "@/components/subscriptions/create-form"
 import { SubscriptionsList } from "@/components/subscriptions/list"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+// Force dynamic rendering to prevent database access during build
+export const dynamic = 'force-dynamic'
+
 export default async function SubscriptionsPage() {
   const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
 
