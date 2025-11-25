@@ -1,7 +1,7 @@
-import type { NextAuthConfig } from "next-auth"
+import type { NextAuthOptions } from "next-auth"
 import EmailProvider from "next-auth/providers/email"
 
-export const authConfig = {
+export const authConfig: NextAuthOptions = {
   providers: [
     EmailProvider({
       from: process.env.NEXTAUTH_FROM_EMAIL || "noreply@stormwaterwatch.org",
@@ -42,4 +42,4 @@ export const authConfig = {
     },
   },
   trustHost: true,
-} satisfies NextAuthConfig
+}
