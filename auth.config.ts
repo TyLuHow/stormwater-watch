@@ -16,8 +16,8 @@ export const authConfig: NextAuthOptions = {
     }),
   ],
   pages: {
-    signIn: "/auth/signin",
-    verifyRequest: "/auth/verify",
+    signIn: "/api/auth/signin",
+    verifyRequest: "/api/auth/verify-request",
   },
   callbacks: {
     async jwt({ token, user }: any) {
