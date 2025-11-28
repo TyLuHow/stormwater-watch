@@ -251,8 +251,8 @@ export default async function DashboardPage({
               <div className="space-y-4">
                 {(() => {
                   const byCounty = violations.reduce(
-                    (acc, v) => {
-                      const existing = acc.find((c) => c.county === v.facility.county)
+                    (acc: { county: string | null; count: number }[], v) => {
+                      const existing = acc.find((c: { county: string | null; count: number }) => c.county === v.facility.county)
                       if (existing) {
                         existing.count++
                       } else {
