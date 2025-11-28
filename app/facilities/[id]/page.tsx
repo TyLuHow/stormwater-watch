@@ -291,7 +291,7 @@ export default async function FacilityPage({ params }: { params: { id: string } 
       {pollutants.map((pollutant: string) => {
         const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutant === pollutant)
         if (!violation) return null
-        return <SampleChart key={pollutant} samples={facility.samples} pollutant={pollutant} />
+        return <SampleChart key={pollutant} samples={facility.samples as any} pollutant={pollutant} />
       })}
 
       {/* Case Packet Generation */}
