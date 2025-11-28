@@ -48,8 +48,8 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
 
     // Dynamically import mapbox-gl
     import("mapbox-gl")
-      .then((mapboxgl) => {
-        ;(mapboxgl as any).accessToken = mapboxToken
+      .then((mapboxModule) => {
+        const mapboxgl = mapboxModule.default || mapboxModule
 
         // Use dark style for better mission control aesthetic
         map.current = new mapboxgl.Map({
@@ -58,6 +58,7 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
           center: [-119.4179, 36.7783], // Center of California
           zoom: 6,
           attributionControl: false,
+          accessToken: mapboxToken, // Pass token in constructor instead of setting on module
         })
 
         // Add navigation controls
