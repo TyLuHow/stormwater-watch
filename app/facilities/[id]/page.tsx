@@ -11,8 +11,44 @@ import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
 
+// Type definitions for facility data
+interface ViolationEvent {
+  id: string
+  pollutant: string
+  count: number
+  maxRatio: number | { toNumber(): number }
+  reportingYear: string
+  impairedWater: boolean
+  firstDate: Date
+  lastDate: Date
+}
+
+interface Sample {
+  id: string
+  pollutant: string
+  sampleDate: Date
+  value: number | { toNumber(): number }
+  unit: string
+  benchmark: number | { toNumber(): number }
+  benchmarkUnit: string
+  exceedanceRatio?: number | { toNumber(): number } | null
+}
+
+interface FacilityData {
+  id: string
+  name: string
+  permitId: string
+  county: string | null
+  receivingWater: string | null
+  watershedHuc12: string | null
+  ms4: string | null
+  isInDAC: boolean
+  violationEvents: ViolationEvent[]
+  samples: Sample[]
+}
+
 // Mock samples for demo mode
-const mockSamples = [
+const mockSamples: Sample[] = [
   {
     id: "sample-001",
     pollutant: "Total Nitrogen",
@@ -46,22 +82,34 @@ const mockSamples = [
 ]
 
 export default async function FacilityPage({ params }: { params: { id: string } }) {
-  let facility: any = null
+  let facility: FacilityData | null = null
   let usingMockData = DEV_MODE
 
   if (DEV_MODE) {
     // Use mock data
     const mockFacility = mockFacilities.find(f => f.id === params.id)
     if (mockFacility) {
-      const facilityViolations = mockViolations
+      const facilityViolations: ViolationEvent[] = mockViolations
         .filter(v => v.facilityId === params.id)
         .map(v => ({
-          ...v,
+          id: v.id,
+          pollutant: v.pollutant,
+          count: v.count,
+          maxRatio: Number(v.maxRatio),
+          reportingYear: v.reportingYear,
+          impairedWater: v.impairedWater,
           firstDate: v.firstDate,
           lastDate: v.lastDate,
         }))
       facility = {
-        ...mockFacility,
+        id: mockFacility.id,
+        name: mockFacility.name,
+        permitId: mockFacility.permitId,
+        county: mockFacility.county,
+        receivingWater: mockFacility.receivingWater,
+        watershedHuc12: mockFacility.watershedHuc12,
+        ms4: mockFacility.ms4,
+        isInDAC: mockFacility.isInDAC,
         violationEvents: facilityViolations,
         samples: mockSamples,
       }
@@ -88,15 +136,27 @@ export default async function FacilityPage({ params }: { params: { id: string } 
       usingMockData = true
       const mockFacility = mockFacilities.find(f => f.id === params.id)
       if (mockFacility) {
-        const facilityViolations = mockViolations
+        const facilityViolations: ViolationEvent[] = mockViolations
           .filter(v => v.facilityId === params.id)
           .map(v => ({
-            ...v,
+            id: v.id,
+            pollutant: v.pollutant,
+            count: v.count,
+            maxRatio: Number(v.maxRatio),
+            reportingYear: v.reportingYear,
+            impairedWater: v.impairedWater,
             firstDate: v.firstDate,
             lastDate: v.lastDate,
           }))
         facility = {
-          ...mockFacility,
+          id: mockFacility.id,
+          name: mockFacility.name,
+          permitId: mockFacility.permitId,
+          county: mockFacility.county,
+          receivingWater: mockFacility.receivingWater,
+          watershedHuc12: mockFacility.watershedHuc12,
+          ms4: mockFacility.ms4,
+          isInDAC: mockFacility.isInDAC,
           violationEvents: facilityViolations,
           samples: mockSamples,
         }
@@ -110,14 +170,14 @@ export default async function FacilityPage({ params }: { params: { id: string } 
 
   // Calculate metrics
   const ytdViolations = facility.violationEvents.filter(
-    (v) => v.reportingYear === new Date().getFullYear().toString()
+    (v: ViolationEvent) => v.reportingYear === new Date().getFullYear().toString()
   ).length
   const worstViolation = facility.violationEvents[0]
   const worstPollutant = worstViolation?.pollutant || "N/A"
   const maxRatio = worstViolation ? Number(worstViolation.maxRatio) : 0
 
   // Get unique pollutants for charts
-  const pollutants = [...new Set(facility.samples.map((s) => s.pollutant))]
+  const pollutants: string[] = [...new Set(facility.samples.map((s: Sample) => s.pollutant))]
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -174,14 +234,14 @@ export default async function FacilityPage({ params }: { params: { id: string } 
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               Receiving Water
-              {facility.violationEvents.some((v) => v.impairedWater) && (
+              {facility.violationEvents.some((v: ViolationEvent) => v.impairedWater) && (
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg">{facility.receivingWater || "N/A"}</p>
-            {facility.violationEvents.some((v) => v.impairedWater) && (
+            {facility.violationEvents.some((v: ViolationEvent) => v.impairedWater) && (
               <Badge variant="destructive" className="mt-1">
                 Impaired Water
               </Badge>
@@ -228,8 +288,8 @@ export default async function FacilityPage({ params }: { params: { id: string } 
       )}
 
       {/* Charts for each pollutant with violations */}
-      {pollutants.map((pollutant) => {
-        const violation = facility.violationEvents.find((v) => v.pollutant === pollutant)
+      {pollutants.map((pollutant: string) => {
+        const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutant === pollutant)
         if (!violation) return null
         return <SampleChart key={pollutant} samples={facility.samples} pollutant={pollutant} />
       })}
@@ -243,7 +303,7 @@ export default async function FacilityPage({ params }: { params: { id: string } 
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {facility.violationEvents.map((violation) => (
+              {facility.violationEvents.map((violation: ViolationEvent) => (
                 <div key={violation.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">{violation.pollutant}</p>
@@ -280,7 +340,7 @@ export default async function FacilityPage({ params }: { params: { id: string } 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {facility.violationEvents.map((v) => (
+                {facility.violationEvents.map((v: ViolationEvent) => (
                   <TableRow key={v.id}>
                     <TableCell className="font-medium">{v.pollutant}</TableCell>
                     <TableCell>
@@ -322,7 +382,7 @@ export default async function FacilityPage({ params }: { params: { id: string } 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {facility.samples.map((s) => (
+              {facility.samples.map((s: Sample) => (
                 <TableRow key={s.id}>
                   <TableCell className="text-sm">{s.sampleDate.toLocaleDateString()}</TableCell>
                   <TableCell>{s.pollutant}</TableCell>
