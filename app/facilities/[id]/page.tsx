@@ -130,6 +130,38 @@ export default async function FacilityPage({ params }: { params: { id: string } 
           },
         },
       })
+
+      // If database returned null, try mock data (for demo facility IDs like fac-001)
+      if (!facility) {
+        const mockFacility = mockFacilities.find(f => f.id === params.id)
+        if (mockFacility) {
+          usingMockData = true
+          const facilityViolations: ViolationEvent[] = mockViolations
+            .filter(v => v.facilityId === params.id)
+            .map(v => ({
+              id: v.id,
+              pollutant: v.pollutant,
+              count: v.count,
+              maxRatio: Number(v.maxRatio),
+              reportingYear: v.reportingYear,
+              impairedWater: v.impairedWater,
+              firstDate: v.firstDate,
+              lastDate: v.lastDate,
+            }))
+          facility = {
+            id: mockFacility.id,
+            name: mockFacility.name,
+            permitId: mockFacility.permitId,
+            county: mockFacility.county,
+            receivingWater: mockFacility.receivingWater,
+            watershedHuc12: mockFacility.watershedHuc12,
+            ms4: mockFacility.ms4,
+            isInDAC: mockFacility.isInDAC,
+            violationEvents: facilityViolations,
+            samples: mockSamples,
+          }
+        }
+      }
     } catch (error) {
       console.error("Database error fetching facility:", error)
       // Fall back to mock data
