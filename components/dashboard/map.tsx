@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { AlertTriangle } from "lucide-react"
+import "mapbox-gl/dist/mapbox-gl.css"
 import type { Facility, ViolationEvent } from "@prisma/client"
 import type { Decimal } from "@prisma/client/runtime/library"
 
@@ -150,8 +151,8 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
           map.current.fitBounds(bounds, { padding: 50, maxZoom: 12 })
         }
       })
-      .catch(() => {
-        console.error("Failed to load Mapbox")
+      .catch((error) => {
+        console.error("Failed to load Mapbox:", error)
       })
 
     return () => {
