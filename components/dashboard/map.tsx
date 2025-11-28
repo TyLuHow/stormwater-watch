@@ -77,27 +77,27 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
           const lon = facility.lon || facility.longitude
 
           // Create custom marker element for better styling
+          // Base size reduced from 24px to 16px for smaller markers
+          const baseSize = 16
           const el = document.createElement('div')
           el.className = 'custom-marker'
           el.style.cssText = `
-            width: ${24 * scale}px;
-            height: ${24 * scale}px;
+            width: ${baseSize * scale}px;
+            height: ${baseSize * scale}px;
             background-color: ${color};
-            border: 3px solid rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.9);
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 4px ${color}20;
-            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px ${color}20;
+            transition: box-shadow 0.2s ease;
           `
 
-          // Add hover effect
+          // Add hover effect - only change box-shadow, not transform (to avoid position jump)
           el.addEventListener('mouseenter', () => {
-            el.style.transform = 'scale(1.3)'
-            el.style.boxShadow = `0 6px 20px rgba(0, 0, 0, 0.6), 0 0 0 6px ${color}40`
+            el.style.boxShadow = `0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 4px ${color}40`
           })
           el.addEventListener('mouseleave', () => {
-            el.style.transform = 'scale(1)'
-            el.style.boxShadow = `0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 4px ${color}20`
+            el.style.boxShadow = `0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 2px ${color}20`
           })
 
           // Enhanced popup with mission control styling

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { Decimal } from "@prisma/client/runtime/library"
 import { z } from "zod"
 import { withRateLimit } from "@/lib/middleware/rate-limit"
+import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
 
 const QuerySchema = z.object({
   pollutants: z.string().optional(),
@@ -28,6 +29,31 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const params = QuerySchema.parse(Object.fromEntries(searchParams.entries()))
+
+    // Return mock data in dev mode or when database is unavailable
+    if (DEV_MODE) {
+      const violationsWithFacility = mockViolations.map(v => ({
+        ...v,
+        facility: mockFacilities.find(f => f.id === v.facilityId),
+      }))
+
+      return NextResponse.json({
+        violations: violationsWithFacility,
+        total: violationsWithFacility.length,
+        pagination: {
+          limit: 100,
+          offset: 0,
+          hasMore: false,
+        },
+        filters: {
+          pollutants: [...new Set(mockViolations.map(v => v.pollutant))],
+          counties: [...new Set(mockFacilities.map(f => f.county).filter(Boolean))],
+          huc12s: [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean))],
+          ms4s: [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean))],
+          years: [...new Set(mockViolations.map(v => v.reportingYear))],
+        },
+      })
+    }
 
     // Build where clause
     const where: any = {}

@@ -6,24 +6,103 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
 import { AlertTriangle, MapPin } from "lucide-react"
+import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
 
+// Mock samples for demo mode
+const mockSamples = [
+  {
+    id: "sample-001",
+    pollutant: "Total Nitrogen",
+    sampleDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    value: 12.5,
+    unit: "mg/L",
+    benchmark: 5.0,
+    benchmarkUnit: "mg/L",
+    exceedanceRatio: 2.5,
+  },
+  {
+    id: "sample-002",
+    pollutant: "Total Nitrogen",
+    sampleDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    value: 8.0,
+    unit: "mg/L",
+    benchmark: 5.0,
+    benchmarkUnit: "mg/L",
+    exceedanceRatio: 1.6,
+  },
+  {
+    id: "sample-003",
+    pollutant: "Phosphorus",
+    sampleDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
+    value: 1.8,
+    unit: "mg/L",
+    benchmark: 1.0,
+    benchmarkUnit: "mg/L",
+    exceedanceRatio: 1.8,
+  },
+]
+
 export default async function FacilityPage({ params }: { params: { id: string } }) {
-  const facility = await prisma.facility.findUnique({
-    where: { id: params.id },
-    include: {
-      violationEvents: {
-        where: { dismissed: false },
-        orderBy: { maxRatio: "desc" },
-      },
-      samples: {
-        orderBy: { sampleDate: "desc" },
-        take: 500, // Get more samples for charts
-      },
-    },
-  })
+  let facility: any = null
+  let usingMockData = DEV_MODE
+
+  if (DEV_MODE) {
+    // Use mock data
+    const mockFacility = mockFacilities.find(f => f.id === params.id)
+    if (mockFacility) {
+      const facilityViolations = mockViolations
+        .filter(v => v.facilityId === params.id)
+        .map(v => ({
+          ...v,
+          firstDate: v.firstDate,
+          lastDate: v.lastDate,
+        }))
+      facility = {
+        ...mockFacility,
+        violationEvents: facilityViolations,
+        samples: mockSamples,
+      }
+    }
+  } else {
+    // Try to fetch from database
+    try {
+      facility = await prisma.facility.findUnique({
+        where: { id: params.id },
+        include: {
+          violationEvents: {
+            where: { dismissed: false },
+            orderBy: { maxRatio: "desc" },
+          },
+          samples: {
+            orderBy: { sampleDate: "desc" },
+            take: 500,
+          },
+        },
+      })
+    } catch (error) {
+      console.error("Database error fetching facility:", error)
+      // Fall back to mock data
+      usingMockData = true
+      const mockFacility = mockFacilities.find(f => f.id === params.id)
+      if (mockFacility) {
+        const facilityViolations = mockViolations
+          .filter(v => v.facilityId === params.id)
+          .map(v => ({
+            ...v,
+            firstDate: v.firstDate,
+            lastDate: v.lastDate,
+          }))
+        facility = {
+          ...mockFacility,
+          violationEvents: facilityViolations,
+          samples: mockSamples,
+        }
+      }
+    }
+  }
 
   if (!facility) {
     notFound()
@@ -43,7 +122,14 @@ export default async function FacilityPage({ params }: { params: { id: string } 
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{facility.name}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">{facility.name}</h1>
+          {usingMockData && (
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+              Demo Mode
+            </Badge>
+          )}
+        </div>
         <p className="text-muted-foreground mt-2">{facility.county} County</p>
       </div>
 
