@@ -30,109 +30,142 @@ export default async function DashboardPage({
   const county = searchParams.county
   const pollutant = searchParams.pollutant
 
-  let violations, facilities
+  let violations: any[], facilities: any[]
+  let usingMockData = DEV_MODE
 
-  if (DEV_MODE) {
-    // Use mock data in dev mode
-    violations = mockViolations.map((v) => ({
+  // Helper to get mock data with filters applied
+  const getMockData = () => {
+    let mockVios = mockViolations.map((v) => ({
       ...v,
       facility: mockFacilities.find((f) => f.id === v.facilityId)!,
     }))
 
     // Apply filters to mock data
     if (county) {
-      violations = violations.filter((v) => v.facility.county === county)
+      mockVios = mockVios.filter((v) => v.facility.county === county)
     }
     if (pollutant) {
-      violations = violations.filter((v) => v.pollutant === pollutant)
+      mockVios = mockVios.filter((v) => v.pollutant === pollutant)
     }
     if (counties.length > 0) {
-      violations = violations.filter((v) => counties.includes(v.facility.county))
+      mockVios = mockVios.filter((v) => counties.includes(v.facility.county))
     }
     if (pollutants.length > 0) {
-      violations = violations.filter((v) => pollutants.includes(v.pollutant))
+      mockVios = mockVios.filter((v) => pollutants.includes(v.pollutant))
     }
     if (years.length > 0) {
-      violations = violations.filter((v) => years.includes(v.reportingYear.toString()))
+      mockVios = mockVios.filter((v) => years.includes(v.reportingYear.toString()))
     }
     if (minRatio > 1.0) {
-      violations = violations.filter((v) => Number(v.maxRatio) >= minRatio)
+      mockVios = mockVios.filter((v) => Number(v.maxRatio) >= minRatio)
     }
     if (impairedOnly) {
-      violations = violations.filter((v) => v.severity === "HIGH")
+      mockVios = mockVios.filter((v) => v.severity === "HIGH")
     }
     if (hideDismissed) {
-      violations = violations.filter((v) => !v.dismissed)
+      mockVios = mockVios.filter((v) => !v.dismissed)
     }
     if (dateFrom) {
-      violations = violations.filter((v) => new Date(v.firstDate) >= dateFrom)
+      mockVios = mockVios.filter((v) => new Date(v.firstDate) >= dateFrom)
     }
     if (dateTo) {
-      violations = violations.filter((v) => new Date(v.lastDate) <= dateTo)
+      mockVios = mockVios.filter((v) => new Date(v.lastDate) <= dateTo)
     }
 
-    facilities = mockFacilities
-  } else {
-    // Build where clause for enhanced filters
-    const whereClause: any = {
-      dismissed: hideDismissed ? false : undefined,
-      ...(county && { facility: { county } }),
-      ...(pollutant && { pollutant }),
-      ...(counties.length > 0 && { facility: { county: { in: counties } } }),
-      ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
-      ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
-      ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
-      ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
-      ...(minRatio > 1.0 && { maxRatio: { gte: minRatio } }),
-      ...(impairedOnly && { impairedWater: true }),
-      ...(dateFrom && { firstDate: { gte: dateFrom } }),
-      ...(dateTo && { lastDate: { lte: dateTo } }),
-    }
-    
-    // Remove undefined values
-    Object.keys(whereClause).forEach(key => {
-      if (whereClause[key] === undefined) {
-        delete whereClause[key]
-      }
-    })
-    
-    // Fetch from Supabase in production
-    violations = await prisma.violationEvent.findMany({
-      where: whereClause,
-      include: { facility: true },
-      orderBy: { maxRatio: "desc" },
-      take: 100,
-    })
-
-    facilities = await prisma.facility.findMany({
-      where: {
-        violationEvents: {
-          some: whereClause,
-        },
-      },
-    })
+    return { violations: mockVios, facilities: mockFacilities }
   }
 
-  // Get available filter options
-  const availableCounties: string[] = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
-    : await prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }).then(r => r.map(x => x.county).filter(Boolean) as string[])
+  if (DEV_MODE) {
+    const mockData = getMockData()
+    violations = mockData.violations
+    facilities = mockData.facilities
+  } else {
+    // Try to fetch from database, fall back to mock data on error
+    try {
+      // Build where clause for enhanced filters
+      const whereClause: any = {
+        dismissed: hideDismissed ? false : undefined,
+        ...(county && { facility: { county } }),
+        ...(pollutant && { pollutant }),
+        ...(counties.length > 0 && { facility: { county: { in: counties } } }),
+        ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
+        ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
+        ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
+        ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
+        ...(minRatio > 1.0 && { maxRatio: { gte: minRatio } }),
+        ...(impairedOnly && { impairedWater: true }),
+        ...(dateFrom && { firstDate: { gte: dateFrom } }),
+        ...(dateTo && { lastDate: { lte: dateTo } }),
+      }
 
-  const availablePollutants: string[] = DEV_MODE
-    ? [...new Set(mockViolations.map(v => v.pollutant))]
-    : await prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }).then(r => r.map(x => x.pollutant).filter(Boolean) as string[])
+      // Remove undefined values
+      Object.keys(whereClause).forEach(key => {
+        if (whereClause[key] === undefined) {
+          delete whereClause[key]
+        }
+      })
 
-  const availableHuc12s: string[] = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
-    : await prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }).then(r => r.map(x => x.watershedHuc12).filter(Boolean) as string[])
+      // Fetch from Supabase in production
+      violations = await prisma.violationEvent.findMany({
+        where: whereClause,
+        include: { facility: true },
+        orderBy: { maxRatio: "desc" },
+        take: 100,
+      })
 
-  const availableMs4s: string[] = DEV_MODE
-    ? [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
-    : await prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }).then(r => r.map(x => x.ms4).filter(Boolean) as string[])
+      facilities = await prisma.facility.findMany({
+        where: {
+          violationEvents: {
+            some: whereClause,
+          },
+        },
+      })
+    } catch (error) {
+      // Database unavailable - fall back to mock data
+      console.error("Database error, using mock data:", error)
+      usingMockData = true
+      const mockData = getMockData()
+      violations = mockData.violations
+      facilities = mockData.facilities
+    }
+  }
 
-  const availableYears: string[] = DEV_MODE
-    ? [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
-    : await prisma.violationEvent.findMany({ select: { reportingYear: true }, distinct: ['reportingYear'] }).then(r => r.map(x => x.reportingYear.toString()))
+  // Get available filter options (use mock data if DB unavailable)
+  let availableCounties: string[]
+  let availablePollutants: string[]
+  let availableHuc12s: string[]
+  let availableMs4s: string[]
+  let availableYears: string[]
+
+  if (usingMockData) {
+    availableCounties = [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
+    availablePollutants = [...new Set(mockViolations.map(v => v.pollutant))]
+    availableHuc12s = [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
+    availableMs4s = [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
+    availableYears = [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
+  } else {
+    try {
+      const [countiesRes, pollutantsRes, huc12sRes, ms4sRes, yearsRes] = await Promise.all([
+        prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }),
+        prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }),
+        prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }),
+        prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }),
+        prisma.violationEvent.findMany({ select: { reportingYear: true }, distinct: ['reportingYear'] }),
+      ])
+      availableCounties = countiesRes.map(x => x.county).filter(Boolean) as string[]
+      availablePollutants = pollutantsRes.map(x => x.pollutant).filter(Boolean) as string[]
+      availableHuc12s = huc12sRes.map(x => x.watershedHuc12).filter(Boolean) as string[]
+      availableMs4s = ms4sRes.map(x => x.ms4).filter(Boolean) as string[]
+      availableYears = yearsRes.map(x => x.reportingYear.toString())
+    } catch {
+      // Fall back to mock filter options
+      availableCounties = [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
+      availablePollutants = [...new Set(mockViolations.map(v => v.pollutant))]
+      availableHuc12s = [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
+      availableMs4s = [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
+      availableYears = [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -145,8 +178,8 @@ export default async function DashboardPage({
               <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 Live Monitoring
               </span>
-              {DEV_MODE && (
-                <span className="badge-warning ml-2">Development Mode</span>
+              {usingMockData && (
+                <span className="badge-warning ml-2">Demo Mode (Sample Data)</span>
               )}
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-4 slide-in-bottom">
