@@ -8,12 +8,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 export const dynamic = 'force-dynamic'
 
 export default async function SubscriptionsPage() {
-  const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
+  // Production: require auth (uncomment when auth is enabled)
+  // const session = await auth()
+  // if (!session?.user) {
+  //   redirect("/auth/signin")
+  // }
 
-  // In dev mode, show all subscriptions; otherwise require auth
   let subscriptions: any[] = []
-  if (isDev) {
-    // Dev mode: show all subscriptions
+
+  try {
     subscriptions = await prisma.subscription.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -25,12 +28,7 @@ export default async function SubscriptionsPage() {
         },
       },
     })
-  } else {
-    // Production: require auth (uncomment when auth is enabled)
-    // const session = await auth()
-    // if (!session?.user) {
-    //   redirect("/auth/signin")
-    // }
+    // When auth is enabled, filter by user:
     // subscriptions = await prisma.subscription.findMany({
     //   where: { userId: session.user.id! },
     //   orderBy: { createdAt: "desc" },
@@ -43,7 +41,9 @@ export default async function SubscriptionsPage() {
     //     },
     //   },
     // })
-    subscriptions = [] // Empty in production until auth is enabled
+  } catch (error) {
+    console.error("Error fetching subscriptions:", error)
+    subscriptions = []
   }
 
   return (

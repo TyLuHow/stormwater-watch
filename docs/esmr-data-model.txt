@@ -1,0 +1,194 @@
+eSMR Data Model - Entity Relationship Diagram
+================================================
+
+DIMENSION TABLES (Lookup/Reference Data)
+-----------------------------------------
+
+┌─────────────────┐
+│   ESMRRegion    │
+│─────────────────│
+│ code (PK)       │ ◄────────┐
+│ name            │          │
+└─────────────────┘          │
+                             │
+                             │ regionCode
+                             │
+                   ┌─────────────────┐
+                   │  ESMRFacility   │
+                   │─────────────────│
+                   │ facilityPlaceId │ ◄────────┐
+                   │ facilityName    │          │
+                   │ regionCode (FK) │          │
+                   │ receivingWater  │          │
+                   │ createdAt       │          │
+                   │ lastSeenAt      │          │
+                   └─────────────────┘          │
+                             │                  │
+                             │ facilityPlaceId  │
+                             │                  │
+                   ┌─────────────────┐          │
+                   │  ESMRLocation   │          │
+                   │─────────────────│          │
+                   │ locationPlaceId │ ◄────────┼────────┐
+                   │ facilityPlaceId │          │        │
+                   │ locationCode    │          │        │
+                   │ locationType    │          │        │
+                   │ latitude        │          │        │
+                   │ longitude       │          │        │
+                   │ locationDesc    │          │        │
+                   │ createdAt       │          │        │
+                   │ lastSeenAt      │          │        │
+                   └─────────────────┘          │        │
+                                                │        │
+                                                │        │
+┌──────────────────────┐                       │        │
+│   ESMRParameter      │                       │        │
+│──────────────────────│                       │        │
+│ id (PK)              │ ◄─────────────────────┼────────┼────┐
+│ parameterName        │                       │        │    │
+│ category             │                       │        │    │
+│ canonicalKey         │                       │        │    │
+│ notes                │                       │        │    │
+└──────────────────────┘                       │        │    │
+                                               │        │    │
+                                               │        │    │
+┌──────────────────────────┐                  │        │    │
+│ ESMRAnalyticalMethod     │                  │        │    │
+│──────────────────────────│                  │        │    │
+│ methodCode (PK)          │ ◄────────────────┼────────┼────┼────┐
+│ methodName               │                  │        │    │    │
+│ category                 │                  │        │    │    │
+│ notes                    │                  │        │    │    │
+└──────────────────────────┘                  │        │    │    │
+                                              │        │    │    │
+                                              │        │    │    │
+FACT TABLE (Measurement Data)                │        │    │    │
+-------------------------------               │        │    │    │
+                                              │        │    │    │
+                        ┌───────────────────────────────────────────────┐
+                        │             ESMRSample (FACT TABLE)           │
+                        │───────────────────────────────────────────────│
+                        │ id (PK)                                       │
+                        │ locationPlaceId (FK) ─────────────────────────┘
+                        │ parameterId (FK) ─────────────────────────────────┘
+                        │ analyticalMethodId (FK) ─────────────────────────────┘
+                        │ samplingDate                                  │
+                        │ samplingTime                                  │
+                        │ analysisDate                                  │
+                        │ analysisTime                                  │
+                        │ qualifier (ENUM)                              │
+                        │ result                                        │
+                        │ units                                         │
+                        │ calculatedMethod                              │
+                        │ mdl (Method Detection Limit)                  │
+                        │ ml (Minimum Level)                            │
+                        │ rl (Reporting Limit)                          │
+                        │ reviewPriorityIndicator                       │
+                        │ qaCodes                                       │
+                        │ comments                                      │
+                        │ reportName                                    │
+                        │ smrDocumentId                                 │
+                        │ createdAt                                     │
+                        └───────────────────────────────────────────────┘
+                                          │
+                        ┌─────────────────┴─────────────────┐
+                        │                                   │
+                        ▼                                   ▼
+
+AUDIT/LINEAGE TABLES
+------------------------
+
+┌─────────────────────┐            ┌──────────────────────┐
+│    ESMRImport       │            │  ESMRImportError     │
+│─────────────────────│            │──────────────────────│
+│ id (PK)             │            │ id (PK)              │
+│ importDate          │            │ importId (FK)        │
+│ sourceUrl           │            │ rowNumber            │
+│ sourceFile          │            │ rawData              │
+│ dataYear            │            │ errorMessage         │
+│ recordsProcessed    │            │ createdAt            │
+│ recordsInserted     │            └──────────────────────┘
+│ recordsUpdated      │
+│ recordsErrored      │
+│ errors              │
+│ startedAt           │
+│ completedAt         │
+│ notes               │
+└─────────────────────┘
+
+
+ENUMS
+-----
+
+ESMRLocationType:
+  - EFFLUENT_MONITORING
+  - INFLUENT_MONITORING
+  - RECEIVING_WATER_MONITORING
+  - RECYCLED_WATER_MONITORING
+  - INTERNAL_MONITORING
+
+ESMRQualifier:
+  - DETECTED (=)
+  - LESS_THAN (<)
+  - NOT_DETECTED (ND)
+  - DETECTED_NOT_QUANTIFIED (DNQ)
+
+
+DATA FLOW
+---------
+
+Region (5 records)
+  └─> Facility (thousands)
+       └─> Location (tens of thousands)
+            └─> Sample (millions) ──> Parameter (hundreds)
+                 └──────────────────> Analytical Method (hundreds)
+
+
+INDEXES
+-------
+
+ESMRFacility:
+  - regionCode
+  - facilityName
+  - receivingWaterBody
+
+ESMRLocation:
+  - facilityPlaceId
+  - locationType
+
+ESMRParameter:
+  - category
+
+ESMRSample (CRITICAL - millions of records):
+  - (locationPlaceId, samplingDate) - time-series by location
+  - (parameterId, samplingDate) - time-series by parameter
+  - samplingDate - date range queries
+  - smrDocumentId - group by report
+  - qualifier - filter for detections
+  - reviewPriorityIndicator - priority reviews
+
+
+CARDINALITY ESTIMATES
+---------------------
+
+ESMRRegion:              5 records (stable)
+ESMRFacility:            5,000 - 10,000 records
+ESMRLocation:            20,000 - 50,000 records
+ESMRParameter:           500 - 1,000 records
+ESMRAnalyticalMethod:    200 - 500 records
+ESMRSample:              10,000,000+ records (grows over time)
+ESMRImport:              100s of records (one per import)
+ESMRImportError:         1000s of records (errors collected)
+
+
+STORAGE ESTIMATES
+-----------------
+
+ESMRSample (fact table): ~500 bytes/row
+  - 1M records ≈ 500 MB
+  - 10M records ≈ 5 GB
+  - 20 years of data ≈ 10-20 GB
+
+Dimension tables: <100 MB total
+
+Total database size: 10-20 GB for full dataset (2006-present)

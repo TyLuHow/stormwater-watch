@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { Decimal } from "@prisma/client/runtime/library"
-import { DEV_MODE } from "@/lib/dev-mode"
 
 export async function POST(req: NextRequest) {
   // Auth is disabled - app is currently public
@@ -10,18 +9,6 @@ export async function POST(req: NextRequest) {
   // if (!session?.user) {
   //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   // }
-
-  if (DEV_MODE) {
-    // In dev mode, return mock success
-    return NextResponse.json({
-      success: true,
-      subscription: {
-        id: "sub-demo-" + Date.now(),
-        name: "Demo Subscription",
-        message: "Subscriptions are disabled in demo mode",
-      },
-    })
-  }
 
   try {
     const body = await req.json()

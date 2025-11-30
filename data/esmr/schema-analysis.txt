@@ -1,0 +1,232 @@
+====================================================================================================
+eSMR CSV SCHEMA ANALYSIS
+File: sample-2025.csv
+Rows analyzed: 9999
+Columns: 29
+====================================================================================================
+
+Column: region
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (5)
+  Sample Values: ['Region 2 - San Francisco Bay', 'Region 4 - Los Angeles', 'Region 5F - Fresno', 'Region 3 - Central Coast', 'Region 9 - San Diego']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: location
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: LOW (26)
+  Sample Values: ['E-003', 'E-001', 'E-002', 'REC-001', 'EFF001 WRR']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: location_place_id
+  Data Type(s): integer
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: LOW (31)
+  Sample Values: ['784043', '784041', '784042', '812836', '826234']
+  Suggestion: FOREIGN KEY or IDENTIFIER
+
+Column: location_place_type
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (5)
+  Sample Values: ['Effluent Monitoring', 'Recycled Water Monitoring', 'Influent Monitoring', 'Receiving Water Monitoring', 'Internal Monitoring']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: parameter
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: MEDIUM (238)
+  Sample Values: ['Total Coliform', 'Flow', 'pH', 'Chlorine, Total Residual', 'Chloride']
+
+Column: analytical_method_code
+  Data Type(s): string
+  Nullable: True (5970/9999 = 59.7% null)
+  Cardinality: LOW (66)
+  Sample Values: ['A9221B', 'DU', 'E150.1', 'E300.0', 'E821013']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: analytical_method
+  Data Type(s): string
+  Nullable: True (5970/9999 = 59.7% null)
+  Cardinality: LOW (66)
+  Sample Values: ['Standard Method 9221 B: Total Coliform Fermentation Technique', 'Data Unavailable', 'pH, Electrometric', 'Inorganic Anions by Ion Chromatography', 'Chronic Toxicity of Effluents/ Receiving Water to Freshwater Organisms (EPA-821-R-02-013)']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: calculated_method
+  Data Type(s): string
+  Nullable: True (4029/9999 = 40.3% null)
+  Cardinality: LOW (31)
+  Sample Values: ['Daily Maximum', 'Daily Discharge', 'Monthly Discharge', 'Daily Average (Mean)', 'Instantaneous Minimum (IMIN)']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: qualifier
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (4)
+  Sample Values: ['=', '<', 'ND', 'DNQ']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: result
+  Data Type(s): decimal, integer
+  Nullable: True (2087/9999 = 20.9% null)
+  Cardinality: HIGH (1000+)
+  Sample Values: ['23', '42.1', '20.6', '12.9', '18.9']
+
+Column: units
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: LOW (28)
+  Sample Values: ['MPN/100 mL', 'MGD', 'SU', 'mg/L', 'MGM']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: mdl
+  Data Type(s): decimal, integer
+  Nullable: True (7189/9999 = 71.9% null)
+  Cardinality: MEDIUM (161)
+  Sample Values: ['0.2', '2', '0.1', '0.5', '0.23']
+
+Column: ml
+  Data Type(s): decimal, integer
+  Nullable: True (9949/9999 = 99.5% null)
+  Cardinality: LOW (10)
+  Sample Values: ['1', '5', '0.1', '0.2', '10']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: rl
+  Data Type(s): decimal, integer
+  Nullable: True (8045/9999 = 80.5% null)
+  Cardinality: LOW (40)
+  Sample Values: ['2', '3', '1', '0.5', '0.1']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: sampling_date
+  Data Type(s): date
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: MEDIUM (212)
+  Sample Values: ['2025-02-13', '2025-02-04', '2025-02-14', '2025-02-05', '2025-02-01']
+
+Column: sampling_time
+  Data Type(s): time
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: MEDIUM (435)
+  Sample Values: ['05:20:00', '19:02:00', '05:58:00', '21:40:00', '21:00:00']
+
+Column: analysis_date
+  Data Type(s): date
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: MEDIUM (212)
+  Sample Values: ['2025-02-13', '2025-02-04', '2025-02-14', '2025-02-05', '2025-02-01']
+
+Column: analysis_time
+  Data Type(s): time
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (2)
+  Sample Values: ['00:00:00', '13:48:00']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: review_priority_indicator
+  Data Type(s): string
+  Nullable: True (7384/9999 = 73.8% null)
+  Cardinality: VERY LOW (2)
+  Sample Values: ['Y', 'N']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: qa_codes
+  Data Type(s): string
+  Nullable: True (9996/9999 = 100.0% null)
+  Cardinality: VERY LOW (3)
+  Sample Values: ['D', 'FO', 'GB']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: comments
+  Data Type(s): string
+  Nullable: True (9307/9999 = 93.1% null)
+  Cardinality: LOW (13)
+  Sample Values: ['Instantaneous Flow Rate', 'Total Event Discharge (MG)', 'Peak Flow Rate in Dry Weather Discharge', 'Dry Weather Discharge During Test', 'Continuous Recorder']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: facility_name
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (8)
+  Sample Values: ['EBMUD SD#1-Wet Wthr Bypass', 'Burbank WRP', 'Whittier Narrows Water Reclamation Plant', 'El Portal WWTF', 'Delta Diablo WWTP']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: facility_place_id
+  Data Type(s): integer
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: VERY LOW (8)
+  Sample Values: ['222130', '212135', '235826', '222491', '219552']
+  Suggestion: FOREIGN KEY or IDENTIFIER
+
+Column: report_name
+  Data Type(s): string
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: LOW (19)
+  Sample Values: ['Monthly SMR ( MONNPDES ) report for February 2025', 'Monthly SMR ( MONNPDES ) report for April 2025', 'Monthly SMR ( MONNPDES ) report for June 2025', 'Quarterly SMR ( MONRPT ) report for Q1 2025', 'Quarterly SMR ( MONRPT ) report for Q2 2025']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: latitude
+  Data Type(s): decimal
+  Nullable: True (8657/9999 = 86.6% null)
+  Cardinality: VERY LOW (5)
+  Sample Values: ['37.67', '37.669167', '37.672778', '33.3341601', '33.162778']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: longitude
+  Data Type(s): decimal
+  Nullable: True (8657/9999 = 86.6% null)
+  Cardinality: VERY LOW (4)
+  Sample Values: ['-119.81', '-119.816944', '-118.3084702', '117.391389']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: receiving_water_body
+  Data Type(s): string
+  Nullable: True (9619/9999 = 96.2% null)
+  Cardinality: VERY LOW (3)
+  Sample Values: ['Merced River- Source to McClure Lake', 'None', 'Pacific Ocean']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+Column: smr_document_id
+  Data Type(s): integer
+  Nullable: False (0/9999 = 0.0% null)
+  Cardinality: LOW (23)
+  Sample Values: ['1554047', '1554049', '1554051', '1767729', '1767730']
+  Suggestion: FOREIGN KEY or IDENTIFIER
+
+Column: location_desc
+  Data Type(s): string
+  Nullable: True (1262/9999 = 12.6% null)
+  Cardinality: LOW (29)
+  Sample Values: ['At any point in the Oakport WWF outfall where all waste tributaries to that outfall are present (may be the same as E-003-D)', 'At any point in the Pt. Isabel WWF outfall where all waste tributaries to that outfall are present (may be the same as E-001-D)', 'At any point in the San Antonio WWF outfall where all waste tributaries to that outfall are present (may be the same as E-002-D)', 'A sampling station shall be established where representativbe samples of reclaimed water can be obtained. Reclaimed water samples may be obtained at a single station provided that station is representative of the quality at all discharge points.', 'Final disinfected tertiary-treated effluent, prior to discharge to the  percolation ponds, where most representative of the effluent discharged']
+  Suggestion: LOOKUP/REFERENCE TABLE
+
+====================================================================================================
+ENTITY RELATIONSHIP ANALYSIS
+====================================================================================================
+
+FACILITY/LOCATION IDENTIFIERS:
+  facility_name: 8 unique values
+  facility_place_id: 8 unique values
+  location: 26 unique values
+  location_place_id: 31 unique values
+  receiving_water_body: 3 unique values
+  latitude: 5 unique values
+  longitude: 4 unique values
+
+MEASUREMENT/SAMPLE IDENTIFIERS:
+  parameter: 238 unique values
+  result: 1000 unique values
+  units: 28 unique values
+  sampling_date: 212 unique values
+  sampling_time: 435 unique values
+  smr_document_id: 23 unique values
+
+REFERENCE/LOOKUP CANDIDATES:
+  region: 5 unique values - ['Region 9 - San Diego', 'Region 2 - San Francisco Bay', 'Region 3 - Central Coast', 'Region 5F - Fresno', 'Region 4 - Los Angeles']
+  location_place_type: 5 unique values - ['Recycled Water Monitoring', 'Receiving Water Monitoring', 'Influent Monitoring', 'Effluent Monitoring', 'Internal Monitoring']
+  analytical_method: 66 unique values - ['Standard Method (19th) 2540 C: Total Diss. Solids at 180 deg.', 'Standard Method 9221 B: Total Coliform Fermentation Technique', 'Standard Method 5540 C: Determ. of Methylene Blue Active Subst.', 'Standard Method (19th) 4500-S D: Methylene Blue Method', 'Standard Method (19th) 4500-N(org) A: Calc. for Org. N (TKN-NH3)', 'Total Cyanide by Semi-automated Colorimetry', 'Calculated Value', 'Inductively Coupled Plasma-Mass Spectrometry', 'HEM and SGT-HEM by Extraction and Gravimetry, Rev. A', 'Standard Method (19th) 2130 B: Turbidity by Nephelometric Method']
+  qualifier: 4 unique values - ['DNQ', '<', 'ND', '=']
+  qa_codes: 3 unique values - ['FO', 'GB', 'D']
+

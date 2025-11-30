@@ -4,7 +4,6 @@
  */
 
 import { redisClient } from "@/lib/providers"
-import { DEV_MODE } from "@/lib/dev-mode"
 
 export interface PrecipitationData {
   date: Date
@@ -102,14 +101,6 @@ export async function getPrecipitationForDate(
     lastUpdate: new Date(),
     source: "NOAA/NWS",
     cached: false,
-  }
-
-  // In dev mode, return mock data
-  if (DEV_MODE) {
-    result.precipitationMM = Math.random() * 50
-    result.precipitationInches = result.precipitationMM / 25.4
-    result.source = "MOCK DATA (DEV MODE)"
-    return result
   }
 
   // Check cache

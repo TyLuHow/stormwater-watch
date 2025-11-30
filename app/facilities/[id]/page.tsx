@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
-import { AlertTriangle, MapPin } from "lucide-react"
-import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
+import { AlertTriangle } from "lucide-react"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -34,6 +33,38 @@ interface Sample {
   exceedanceRatio?: number | { toNumber(): number } | null
 }
 
+interface ESMRSample {
+  id: string
+  samplingDate: Date
+  result: number | { toNumber(): number } | null
+  units: string
+  qualifier: string
+  parameter: {
+    parameterName: string
+    category: string | null
+  }
+  analyticalMethod: {
+    methodCode: string
+    methodName: string
+  } | null
+}
+
+interface ESMRLocation {
+  locationCode: string
+  locationType: string
+  latitude: number | { toNumber(): number } | null
+  longitude: number | { toNumber(): number } | null
+  samples: ESMRSample[]
+}
+
+interface ESMRFacilityData {
+  facilityPlaceId: number
+  facilityName: string
+  regionCode: string
+  receivingWaterBody: string | null
+  locations: ESMRLocation[]
+}
+
 interface FacilityData {
   id: string
   name: string
@@ -45,155 +76,47 @@ interface FacilityData {
   isInDAC: boolean
   violationEvents: ViolationEvent[]
   samples: Sample[]
+  esmrFacilityId: number | null
+  esmrFacility: ESMRFacilityData | null
 }
 
-// Mock samples for demo mode
-const mockSamples: Sample[] = [
-  {
-    id: "sample-001",
-    pollutant: "Total Nitrogen",
-    sampleDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-    value: 12.5,
-    unit: "mg/L",
-    benchmark: 5.0,
-    benchmarkUnit: "mg/L",
-    exceedanceRatio: 2.5,
-  },
-  {
-    id: "sample-002",
-    pollutant: "Total Nitrogen",
-    sampleDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
-    value: 8.0,
-    unit: "mg/L",
-    benchmark: 5.0,
-    benchmarkUnit: "mg/L",
-    exceedanceRatio: 1.6,
-  },
-  {
-    id: "sample-003",
-    pollutant: "Phosphorus",
-    sampleDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000),
-    value: 1.8,
-    unit: "mg/L",
-    benchmark: 1.0,
-    benchmarkUnit: "mg/L",
-    exceedanceRatio: 1.8,
-  },
-]
-
-export default async function FacilityPage({ params }: { params: { id: string } }) {
+export default async function FacilityPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   let facility: FacilityData | null = null
-  let usingMockData = DEV_MODE
 
-  if (DEV_MODE) {
-    // Use mock data
-    const mockFacility = mockFacilities.find(f => f.id === params.id)
-    if (mockFacility) {
-      const facilityViolations: ViolationEvent[] = mockViolations
-        .filter(v => v.facilityId === params.id)
-        .map(v => ({
-          id: v.id,
-          pollutant: v.pollutant,
-          count: v.count,
-          maxRatio: Number(v.maxRatio),
-          reportingYear: v.reportingYear,
-          impairedWater: v.impairedWater,
-          firstDate: v.firstDate,
-          lastDate: v.lastDate,
-        }))
-      facility = {
-        id: mockFacility.id,
-        name: mockFacility.name,
-        permitId: mockFacility.permitId,
-        county: mockFacility.county,
-        receivingWater: mockFacility.receivingWater,
-        watershedHuc12: mockFacility.watershedHuc12,
-        ms4: mockFacility.ms4,
-        isInDAC: mockFacility.isInDAC,
-        violationEvents: facilityViolations,
-        samples: mockSamples,
-      }
-    }
-  } else {
-    // Try to fetch from database
-    try {
-      facility = await prisma.facility.findUnique({
-        where: { id: params.id },
-        include: {
-          violationEvents: {
-            where: { dismissed: false },
-            orderBy: { maxRatio: "desc" },
-          },
-          samples: {
-            orderBy: { sampleDate: "desc" },
-            take: 500,
+  try {
+    facility = await prisma.facility.findUnique({
+      where: { id },
+      include: {
+        violationEvents: {
+          where: { dismissed: false },
+          orderBy: { maxRatio: "desc" },
+        },
+        samples: {
+          orderBy: { sampleDate: "desc" },
+          take: 500,
+        },
+        esmrFacility: {
+          include: {
+            locations: {
+              include: {
+                samples: {
+                  include: {
+                    parameter: true,
+                    analyticalMethod: true,
+                  },
+                  orderBy: { samplingDate: "desc" },
+                  take: 100,
+                },
+              },
+            },
           },
         },
-      })
-
-      // If database returned null, try mock data (for demo facility IDs like fac-001)
-      if (!facility) {
-        const mockFacility = mockFacilities.find(f => f.id === params.id)
-        if (mockFacility) {
-          usingMockData = true
-          const facilityViolations: ViolationEvent[] = mockViolations
-            .filter(v => v.facilityId === params.id)
-            .map(v => ({
-              id: v.id,
-              pollutant: v.pollutant,
-              count: v.count,
-              maxRatio: Number(v.maxRatio),
-              reportingYear: v.reportingYear,
-              impairedWater: v.impairedWater,
-              firstDate: v.firstDate,
-              lastDate: v.lastDate,
-            }))
-          facility = {
-            id: mockFacility.id,
-            name: mockFacility.name,
-            permitId: mockFacility.permitId,
-            county: mockFacility.county,
-            receivingWater: mockFacility.receivingWater,
-            watershedHuc12: mockFacility.watershedHuc12,
-            ms4: mockFacility.ms4,
-            isInDAC: mockFacility.isInDAC,
-            violationEvents: facilityViolations,
-            samples: mockSamples,
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Database error fetching facility:", error)
-      // Fall back to mock data
-      usingMockData = true
-      const mockFacility = mockFacilities.find(f => f.id === params.id)
-      if (mockFacility) {
-        const facilityViolations: ViolationEvent[] = mockViolations
-          .filter(v => v.facilityId === params.id)
-          .map(v => ({
-            id: v.id,
-            pollutant: v.pollutant,
-            count: v.count,
-            maxRatio: Number(v.maxRatio),
-            reportingYear: v.reportingYear,
-            impairedWater: v.impairedWater,
-            firstDate: v.firstDate,
-            lastDate: v.lastDate,
-          }))
-        facility = {
-          id: mockFacility.id,
-          name: mockFacility.name,
-          permitId: mockFacility.permitId,
-          county: mockFacility.county,
-          receivingWater: mockFacility.receivingWater,
-          watershedHuc12: mockFacility.watershedHuc12,
-          ms4: mockFacility.ms4,
-          isInDAC: mockFacility.isInDAC,
-          violationEvents: facilityViolations,
-          samples: mockSamples,
-        }
-      }
-    }
+      },
+    })
+  } catch (error) {
+    console.error("Database error fetching facility:", error)
+    // Let it fall through to the notFound() check below
   }
 
   if (!facility) {
@@ -214,14 +137,7 @@ export default async function FacilityPage({ params }: { params: { id: string } 
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-3xl font-bold">{facility.name}</h1>
-          {usingMockData && (
-            <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-              Demo Mode
-            </Badge>
-          )}
-        </div>
+        <h1 className="text-3xl font-bold">{facility.name}</h1>
         <p className="text-muted-foreground mt-2">{facility.county} County</p>
       </div>
 
@@ -313,6 +229,137 @@ export default async function FacilityPage({ params }: { params: { id: string } 
                   <p className="text-muted-foreground">Environmental Justice</p>
                   <Badge className="bg-green-600">Disadvantaged Community</Badge>
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* eSMR Monitoring Data */}
+      {facility.esmrFacility && (
+        <Card>
+          <CardHeader>
+            <CardTitle>eSMR Monitoring Data</CardTitle>
+            <CardDescription>
+              Electronic Self-Monitoring Reports from {facility.esmrFacility.facilityName} (Region {facility.esmrFacility.regionCode})
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* eSMR Facility Info */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm pb-4 border-b">
+                <div>
+                  <p className="text-muted-foreground">eSMR Facility ID</p>
+                  <p className="font-medium">{facility.esmrFacility.facilityPlaceId}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Region</p>
+                  <Badge variant="outline">{facility.esmrFacility.regionCode}</Badge>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Monitoring Locations</p>
+                  <p className="font-medium">{facility.esmrFacility.locations.length}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Total Samples</p>
+                  <p className="font-medium">
+                    {facility.esmrFacility.locations.reduce((sum, loc) => sum + loc.samples.length, 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {/* Recent eSMR Samples by Location */}
+              {facility.esmrFacility.locations.map((location: ESMRLocation) => {
+                if (location.samples.length === 0) return null;
+
+                return (
+                  <div key={location.locationCode} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold">{location.locationCode}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {location.locationType.replace(/_/g, ' ')}
+                          {location.latitude && location.longitude && (
+                            <> • {typeof location.latitude === 'number' ? location.latitude.toFixed(4) : location.latitude.toNumber().toFixed(4)}, {typeof location.longitude === 'number' ? location.longitude.toFixed(4) : location.longitude.toNumber().toFixed(4)}</>
+                          )}
+                        </p>
+                      </div>
+                      <Badge variant="secondary">{location.samples.length} samples</Badge>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Parameter</TableHead>
+                          <TableHead>Result</TableHead>
+                          <TableHead>Qualifier</TableHead>
+                          <TableHead>Method</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {location.samples.slice(0, 20).map((sample: ESMRSample) => (
+                          <TableRow key={sample.id}>
+                            <TableCell className="text-sm">
+                              {sample.samplingDate.toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <p className="font-medium">{sample.parameter.parameterName}</p>
+                                {sample.parameter.category && (
+                                  <p className="text-xs text-muted-foreground">{sample.parameter.category}</p>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              {sample.result !== null ? (
+                                <span>
+                                  {typeof sample.result === 'number'
+                                    ? sample.result.toFixed(2)
+                                    : sample.result.toNumber().toFixed(2)
+                                  } {sample.units}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">N/A</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={sample.qualifier === 'DETECTED' ? 'default' : 'outline'}
+                                className={
+                                  sample.qualifier === 'DETECTED' ? 'bg-blue-600' :
+                                  sample.qualifier === 'NOT_DETECTED' ? 'bg-gray-500' :
+                                  ''
+                                }
+                              >
+                                {sample.qualifier.replace(/_/g, ' ')}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {sample.analyticalMethod ? (
+                                <span title={sample.analyticalMethod.methodName}>
+                                  {sample.analyticalMethod.methodCode}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    {location.samples.length > 20 && (
+                      <p className="text-sm text-muted-foreground text-center">
+                        Showing 20 of {location.samples.length} samples for this location
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+
+              {facility.esmrFacility.locations.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No monitoring locations found for this eSMR facility
+                </p>
               )}
             </div>
           </CardContent>

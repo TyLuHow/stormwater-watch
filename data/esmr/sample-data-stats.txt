@@ -1,0 +1,64 @@
+Additional Data Analysis Statistics
+====================================
+
+Sample Size: 9,999 records from 2025 eSMR dataset
+File Size: 10,000 lines (header + 9,999 data rows)
+Download Date: November 29, 2025
+
+Column Count: 29 columns
+Required Fields: 15 (0% null)
+Optional Fields: 14 (varying null rates)
+
+Top Facilities in Sample:
+- EBMUD SD#1-Wet Wthr Bypass (facility_place_id: 222130)
+- Burbank WRP (facility_place_id: 212135)
+- Whittier Narrows Water Reclamation Plant (facility_place_id: 235826)
+- El Portal WWTF (facility_place_id: 222491)
+- Delta Diablo WWTP (facility_place_id: 219552)
+
+Top Parameters in Sample:
+- Flow (highly frequent)
+- Total Coliform
+- pH
+- Chlorine, Total Residual
+- Chloride
+
+Date Range in Sample:
+- From: 2025-02-01
+- To: 2025-02-14 (and later dates)
+- Coverage: Primarily February 2025 data
+
+Regions Represented:
+- Region 2 - San Francisco Bay
+- Region 3 - Central Coast
+- Region 4 - Los Angeles
+- Region 5F - Fresno
+- Region 9 - San Diego
+
+Location Types:
+- Effluent Monitoring (most common)
+- Influent Monitoring
+- Receiving Water Monitoring
+- Recycled Water Monitoring
+- Internal Monitoring
+
+Qualifiers Distribution:
+- "=" (Detected): Most common
+- "<" (Less than detection)
+- "ND" (Not Detected)
+- "DNQ" (Detected Not Quantified)
+
+Data Quality Observations:
+1. BOM character in CSV header (UTF-8 byte order mark)
+2. "NaN" used for null numeric values
+3. "NA" used for null string values
+4. Empty strings also used for nulls in some fields
+5. Coordinates 86.6% null (likely only for receiving water locations)
+6. Analytical method 59.7% null (not required for all measurements)
+7. QA codes essentially unused (100% null in sample)
+
+Performance Implications:
+- Fact table (esmr_samples) will be largest by far
+- 9,999 samples from 8 facilities = avg 1,249 samples per facility
+- Extrapolating to thousands of facilities = millions of samples statewide
+- Need partitioning, strategic indexing, and batch import strategy

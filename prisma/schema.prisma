@@ -25,20 +25,24 @@ enum Role {
 }
 
 model Facility {
-  id              String           @id @default(cuid())
-  name            String
-  permitId        String           @unique
-  naics           String?
-  lat             Decimal          @db.Decimal(9, 6)
-  lon             Decimal          @db.Decimal(9, 6)
-  county          String?
-  watershedHuc12  String?
-  ms4             String?
-  receivingWater  String?
-  isInDAC         Boolean          @default(false)
-  enrichedAt      DateTime?
-  createdAt       DateTime         @default(now())
-  lastSeenAt      DateTime         @default(now())
+  id             String    @id @default(cuid())
+  name           String
+  permitId       String    @unique
+  naics          String?
+  lat            Decimal   @db.Decimal(9, 6)
+  lon            Decimal   @db.Decimal(9, 6)
+  county         String?
+  watershedHuc12 String?
+  ms4            String?
+  receivingWater String?
+  isInDAC        Boolean   @default(false)
+  enrichedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+
+  // Link to eSMR facility data
+  esmrFacilityId Int?
+  esmrFacility   ESMRFacility? @relation(fields: [esmrFacilityId], references: [facilityPlaceId])
 
   samples         Sample[]
   violationEvents ViolationEvent[]
@@ -48,23 +52,24 @@ model Facility {
   @@index([watershedHuc12])
   @@index([ms4])
   @@index([isInDAC])
+  @@index([esmrFacilityId])
 }
 
 model Sample {
-  id              String    @id @default(cuid())
+  id              String   @id @default(cuid())
   facilityId      String
-  facility        Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  sampleDate      DateTime  @db.Date
+  facility        Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  sampleDate      DateTime @db.Date
   pollutant       String
-  value           Decimal   @db.Decimal(12, 4)
+  value           Decimal  @db.Decimal(12, 4)
   unit            String
-  benchmark       Decimal   @db.Decimal(12, 4)
+  benchmark       Decimal  @db.Decimal(12, 4)
   benchmarkUnit   String
-  exceedanceRatio Decimal?  @db.Decimal(8, 2)
+  exceedanceRatio Decimal? @db.Decimal(8, 2)
   reportingYear   String
   source          String
-  sourceDocUrl    String?   @db.Text
-  createdAt       DateTime  @default(now())
+  sourceDocUrl    String?  @db.Text
+  createdAt       DateTime @default(now())
 
   @@index([facilityId, pollutant, sampleDate])
   @@index([reportingYear])
@@ -75,19 +80,19 @@ model Sample {
 }
 
 model ViolationEvent {
-  id            String    @id @default(cuid())
+  id            String   @id @default(cuid())
   facilityId    String
-  facility      Facility  @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  facility      Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
   pollutant     String
-  firstDate     DateTime  @db.Date
-  lastDate      DateTime  @db.Date
+  firstDate     DateTime @db.Date
+  lastDate      DateTime @db.Date
   count         Int
-  maxRatio      Decimal   @db.Decimal(8, 2)
+  maxRatio      Decimal  @db.Decimal(8, 2)
   reportingYear String
-  impairedWater Boolean   @default(false)
-  dismissed     Boolean   @default(false)
-  notes         String?   @db.Text
-  createdAt     DateTime  @default(now())
+  impairedWater Boolean  @default(false)
+  dismissed     Boolean  @default(false)
+  notes         String?  @db.Text
+  createdAt     DateTime @default(now())
   alerts        Alert[]
 
   @@unique([facilityId, pollutant, reportingYear])
@@ -168,4 +173,185 @@ model ConfigPollutant {
   aliases       String[]
   canonicalUnit String
   notes         String?  @db.Text
+}
+
+// =============================================================================
+// eSMR (Electronic Self-Monitoring Report) Models
+// =============================================================================
+
+model ESMRRegion {
+  code String @id @db.VarChar(10)
+  name String @unique @db.VarChar(100)
+
+  facilities ESMRFacility[]
+
+  @@map("esmr_regions")
+}
+
+model ESMRFacility {
+  facilityPlaceId Int        @id
+  facilityName    String     @db.VarChar(200)
+  regionCode      String     @db.VarChar(10)
+  region          ESMRRegion @relation(fields: [regionCode], references: [code])
+
+  receivingWaterBody String? @db.VarChar(200)
+
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  locations        ESMRLocation[]
+  linkedFacilities Facility[]
+
+  @@index([regionCode])
+  @@index([facilityName])
+  @@index([receivingWaterBody])
+  @@map("esmr_facilities")
+}
+
+model ESMRLocation {
+  locationPlaceId Int          @id
+  facilityPlaceId Int
+  facility        ESMRFacility @relation(fields: [facilityPlaceId], references: [facilityPlaceId], onDelete: Cascade)
+
+  locationCode String           @db.VarChar(50)
+  locationType ESMRLocationType
+
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  locationDesc String?  @db.Text
+
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  samples ESMRSample[]
+
+  @@index([facilityPlaceId])
+  @@index([locationType])
+  @@map("esmr_locations")
+}
+
+enum ESMRLocationType {
+  EFFLUENT_MONITORING
+  INFLUENT_MONITORING
+  RECEIVING_WATER_MONITORING
+  RECYCLED_WATER_MONITORING
+  INTERNAL_MONITORING
+  GROUNDWATER_MONITORING
+
+  @@map("esmr_location_type")
+}
+
+model ESMRParameter {
+  id            String  @id @default(cuid())
+  parameterName String  @unique @db.VarChar(200)
+  category      String? @db.VarChar(100)
+
+  canonicalKey String?
+
+  notes String? @db.Text
+
+  samples ESMRSample[]
+
+  @@index([category])
+  @@map("esmr_parameters")
+}
+
+model ESMRAnalyticalMethod {
+  methodCode String  @id @db.VarChar(50)
+  methodName String  @db.VarChar(500)
+  category   String? @db.VarChar(100)
+  notes      String? @db.Text
+
+  samples ESMRSample[]
+
+  @@map("esmr_analytical_methods")
+}
+
+model ESMRSample {
+  id String @id @default(cuid())
+
+  locationPlaceId    Int
+  location           ESMRLocation          @relation(fields: [locationPlaceId], references: [locationPlaceId], onDelete: Cascade)
+  parameterId        String
+  parameter          ESMRParameter         @relation(fields: [parameterId], references: [id])
+  analyticalMethodId String?
+  analyticalMethod   ESMRAnalyticalMethod? @relation(fields: [analyticalMethodId], references: [methodCode])
+
+  samplingDate DateTime @db.Date
+  samplingTime DateTime @db.Time
+  analysisDate DateTime @db.Date
+  analysisTime DateTime @db.Time
+
+  qualifier        ESMRQualifier
+  result           Decimal?      @db.Decimal(18, 6)
+  units            String        @db.VarChar(50)
+  calculatedMethod String?       @db.VarChar(100)
+
+  mdl Decimal? @db.Decimal(18, 6)
+  ml  Decimal? @db.Decimal(18, 6)
+  rl  Decimal? @db.Decimal(18, 6)
+
+  reviewPriorityIndicator Boolean?
+  qaCodes                 String?  @db.VarChar(50)
+  comments                String?  @db.Text
+
+  reportName    String @db.VarChar(200)
+  smrDocumentId Int
+
+  createdAt DateTime @default(now())
+
+  @@index([locationPlaceId, samplingDate])
+  @@index([parameterId, samplingDate])
+  @@index([samplingDate])
+  @@index([smrDocumentId])
+  @@index([qualifier])
+  @@index([reviewPriorityIndicator])
+  @@map("esmr_samples")
+}
+
+enum ESMRQualifier {
+  DETECTED
+  LESS_THAN
+  GREATER_THAN
+  NOT_DETECTED
+  DETECTED_NOT_QUANTIFIED
+
+  @@map("esmr_qualifier")
+}
+
+model ESMRImport {
+  id String @id @default(cuid())
+
+  importDate DateTime @default(now())
+  sourceUrl  String   @db.Text
+  sourceFile String   @db.VarChar(500)
+  dataYear   Int
+
+  recordsProcessed Int
+  recordsInserted  Int
+  recordsUpdated   Int
+  recordsErrored   Int
+  errors           String? @db.Text
+
+  startedAt   DateTime
+  completedAt DateTime?
+
+  notes String? @db.Text
+
+  @@index([importDate])
+  @@index([dataYear])
+  @@map("esmr_imports")
+}
+
+model ESMRImportError {
+  id String @id @default(cuid())
+
+  importId     String
+  rowNumber    Int
+  rawData      String   @db.Text
+  errorMessage String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([importId])
+  @@map("esmr_import_errors")
 }

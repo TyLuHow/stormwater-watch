@@ -9,10 +9,8 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   // Auth disabled for now - app is public
-  // const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
   // const session = await auth()
-  // const session = isDev ? { user: { email: "dev@example.com" } } : null
-  // if (!isDev && !session?.user) {
+  // if (!session?.user) {
   //   redirect("/auth/signin")
   // }
 
@@ -28,6 +26,9 @@ export default async function DashboardLayout({
           <nav className="flex items-center gap-4">
             <Link href="/dashboard">
               <Button variant="ghost">Dashboard</Button>
+            </Link>
+            <Link href="/esmr">
+              <Button variant="ghost">eSMR Data</Button>
             </Link>
             <Link href="/subscriptions">
               <Button variant="ghost">

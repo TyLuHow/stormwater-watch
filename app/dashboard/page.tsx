@@ -4,7 +4,10 @@ import { DashboardMap } from "@/components/dashboard/map"
 import { ViolationsTable } from "@/components/dashboard/violations-table"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { DashboardFilters } from "@/components/dashboard/filters"
-import { DEV_MODE, mockFacilities, mockViolations } from "@/lib/dev-mode"
+import { ESMRStatsCards } from "@/components/dashboard/esmr-stats-cards"
+import { ESMRRecentActivity } from "@/components/dashboard/esmr-recent-activity"
+import { AlertTriangle } from "lucide-react"
+import type { StatsResponse, SampleListResponse } from "@/lib/api/esmr"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -12,138 +15,83 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Record<string, string>
+  searchParams: Promise<Record<string, string>>
 }) {
+  const params = await searchParams
+
   // Enhanced filter support
-  const counties = searchParams.counties?.split(",") || []
-  const pollutants = searchParams.pollutants?.split(",") || []
-  const huc12s = searchParams.huc12s?.split(",") || []
-  const ms4s = searchParams.ms4s?.split(",") || []
-  const years = searchParams.years?.split(",") || []
-  const minRatio = parseFloat(searchParams.minRatio || "1.0")
-  const impairedOnly = searchParams.impairedOnly === "true"
-  const hideDismissed = searchParams.hideDismissed !== "false"
-  const dateFrom = searchParams.dateFrom ? new Date(searchParams.dateFrom) : undefined
-  const dateTo = searchParams.dateTo ? new Date(searchParams.dateTo) : undefined
-  
+  const counties = params.counties?.split(",") || []
+  const pollutants = params.pollutants?.split(",") || []
+  const huc12s = params.huc12s?.split(",") || []
+  const ms4s = params.ms4s?.split(",") || []
+  const years = params.years?.split(",") || []
+  const minRatio = parseFloat(params.minRatio || "1.0")
+  const impairedOnly = params.impairedOnly === "true"
+  const hideDismissed = params.hideDismissed !== "false"
+  const dateFrom = params.dateFrom ? new Date(params.dateFrom) : undefined
+  const dateTo = params.dateTo ? new Date(params.dateTo) : undefined
+
   // Legacy support
-  const county = searchParams.county
-  const pollutant = searchParams.pollutant
+  const county = params.county
+  const pollutant = params.pollutant
 
-  let violations: any[], facilities: any[]
-  let usingMockData = DEV_MODE
+  let violations: any[] = []
+  let facilities: any[] = []
+  let dbError: string | null = null
 
-  // Helper to get mock data with filters applied
-  const getMockData = () => {
-    let mockVios = mockViolations.map((v) => ({
-      ...v,
-      facility: mockFacilities.find((f) => f.id === v.facilityId)!,
-    }))
-
-    // Apply filters to mock data
-    if (county) {
-      mockVios = mockVios.filter((v) => v.facility.county === county)
-    }
-    if (pollutant) {
-      mockVios = mockVios.filter((v) => v.pollutant === pollutant)
-    }
-    if (counties.length > 0) {
-      mockVios = mockVios.filter((v) => counties.includes(v.facility.county))
-    }
-    if (pollutants.length > 0) {
-      mockVios = mockVios.filter((v) => pollutants.includes(v.pollutant))
-    }
-    if (years.length > 0) {
-      mockVios = mockVios.filter((v) => years.includes(v.reportingYear.toString()))
-    }
-    if (minRatio > 1.0) {
-      mockVios = mockVios.filter((v) => Number(v.maxRatio) >= minRatio)
-    }
-    if (impairedOnly) {
-      mockVios = mockVios.filter((v) => v.severity === "HIGH")
-    }
-    if (hideDismissed) {
-      mockVios = mockVios.filter((v) => !v.dismissed)
-    }
-    if (dateFrom) {
-      mockVios = mockVios.filter((v) => new Date(v.firstDate) >= dateFrom)
-    }
-    if (dateTo) {
-      mockVios = mockVios.filter((v) => new Date(v.lastDate) <= dateTo)
+  try {
+    // Build where clause for enhanced filters
+    const whereClause: any = {
+      dismissed: hideDismissed ? false : undefined,
+      ...(county && { facility: { county } }),
+      ...(pollutant && { pollutant }),
+      ...(counties.length > 0 && { facility: { county: { in: counties } } }),
+      ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
+      ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
+      ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
+      ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
+      ...(minRatio > 1.0 && { maxRatio: { gte: minRatio } }),
+      ...(impairedOnly && { impairedWater: true }),
+      ...(dateFrom && { firstDate: { gte: dateFrom } }),
+      ...(dateTo && { lastDate: { lte: dateTo } }),
     }
 
-    return { violations: mockVios, facilities: mockFacilities }
-  }
-
-  if (DEV_MODE) {
-    const mockData = getMockData()
-    violations = mockData.violations
-    facilities = mockData.facilities
-  } else {
-    // Try to fetch from database, fall back to mock data on error
-    try {
-      // Build where clause for enhanced filters
-      const whereClause: any = {
-        dismissed: hideDismissed ? false : undefined,
-        ...(county && { facility: { county } }),
-        ...(pollutant && { pollutant }),
-        ...(counties.length > 0 && { facility: { county: { in: counties } } }),
-        ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
-        ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
-        ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
-        ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
-        ...(minRatio > 1.0 && { maxRatio: { gte: minRatio } }),
-        ...(impairedOnly && { impairedWater: true }),
-        ...(dateFrom && { firstDate: { gte: dateFrom } }),
-        ...(dateTo && { lastDate: { lte: dateTo } }),
+    // Remove undefined values
+    Object.keys(whereClause).forEach(key => {
+      if (whereClause[key] === undefined) {
+        delete whereClause[key]
       }
+    })
 
-      // Remove undefined values
-      Object.keys(whereClause).forEach(key => {
-        if (whereClause[key] === undefined) {
-          delete whereClause[key]
-        }
-      })
+    // Fetch from database
+    violations = await prisma.violationEvent.findMany({
+      where: whereClause,
+      include: { facility: true },
+      orderBy: { maxRatio: "desc" },
+      take: 100,
+    })
 
-      // Fetch from Supabase in production
-      violations = await prisma.violationEvent.findMany({
-        where: whereClause,
-        include: { facility: true },
-        orderBy: { maxRatio: "desc" },
-        take: 100,
-      })
-
-      facilities = await prisma.facility.findMany({
-        where: {
-          violationEvents: {
-            some: whereClause,
-          },
+    facilities = await prisma.facility.findMany({
+      where: {
+        violationEvents: {
+          some: whereClause,
         },
-      })
-    } catch (error) {
-      // Database unavailable - fall back to mock data
-      console.error("Database error, using mock data:", error)
-      usingMockData = true
-      const mockData = getMockData()
-      violations = mockData.violations
-      facilities = mockData.facilities
-    }
+      },
+    })
+  } catch (error) {
+    // Database error - show error message
+    console.error("Database error:", error)
+    dbError = error instanceof Error ? error.message : "Failed to load data from database"
   }
 
-  // Get available filter options (use mock data if DB unavailable)
-  let availableCounties: string[]
-  let availablePollutants: string[]
-  let availableHuc12s: string[]
-  let availableMs4s: string[]
-  let availableYears: string[]
+  // Get available filter options
+  let availableCounties: string[] = []
+  let availablePollutants: string[] = []
+  let availableHuc12s: string[] = []
+  let availableMs4s: string[] = []
+  let availableYears: string[] = []
 
-  if (usingMockData) {
-    availableCounties = [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
-    availablePollutants = [...new Set(mockViolations.map(v => v.pollutant))]
-    availableHuc12s = [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
-    availableMs4s = [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
-    availableYears = [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
-  } else {
+  if (!dbError) {
     try {
       const [countiesRes, pollutantsRes, huc12sRes, ms4sRes, yearsRes] = await Promise.all([
         prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }),
@@ -157,13 +105,126 @@ export default async function DashboardPage({
       availableHuc12s = huc12sRes.map(x => x.watershedHuc12).filter(Boolean) as string[]
       availableMs4s = ms4sRes.map(x => x.ms4).filter(Boolean) as string[]
       availableYears = yearsRes.map(x => x.reportingYear.toString())
-    } catch {
-      // Fall back to mock filter options
-      availableCounties = [...new Set(mockFacilities.map(f => f.county).filter(Boolean) as string[])]
-      availablePollutants = [...new Set(mockViolations.map(v => v.pollutant))]
-      availableHuc12s = [...new Set(mockFacilities.map(f => f.watershedHuc12).filter(Boolean) as string[])]
-      availableMs4s = [...new Set(mockFacilities.map(f => f.ms4).filter(Boolean) as string[])]
-      availableYears = [...new Set(mockViolations.map(v => v.reportingYear.toString()))]
+    } catch (error) {
+      console.error("Error fetching filter options:", error)
+    }
+  }
+
+  // Fetch eSMR data for dashboard
+  let esmrStats: StatsResponse | null = null
+  let esmrRecentSamples: SampleListResponse["samples"] = []
+
+  if (!dbError) {
+    try {
+      // Calculate date thresholds
+      const now = new Date()
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+      // Fetch eSMR stats
+      const [
+        totalFacilities,
+        totalLocations,
+        totalSamples,
+        totalParameters,
+        totalRegions,
+        samplesLast30Days,
+        dateRange,
+        topParameters,
+        recentSamples,
+      ] = await Promise.all([
+        prisma.eSMRFacility.count(),
+        prisma.eSMRLocation.count(),
+        prisma.eSMRSample.count(),
+        prisma.eSMRParameter.count(),
+        prisma.eSMRRegion.count(),
+        prisma.eSMRSample.count({
+          where: { samplingDate: { gte: thirtyDaysAgo } },
+        }),
+        prisma.eSMRSample.aggregate({
+          _min: { samplingDate: true },
+          _max: { samplingDate: true },
+        }),
+        prisma.eSMRParameter.findMany({
+          select: {
+            parameterName: true,
+            category: true,
+            _count: { select: { samples: true } },
+          },
+          orderBy: { samples: { _count: "desc" } },
+          take: 20,
+        }),
+        prisma.eSMRSample.findMany({
+          select: {
+            id: true,
+            locationPlaceId: true,
+            samplingDate: true,
+            qualifier: true,
+            result: true,
+            units: true,
+            reviewPriorityIndicator: true,
+            location: {
+              select: {
+                locationCode: true,
+                facilityPlaceId: true,
+                facility: { select: { facilityName: true } },
+              },
+            },
+            parameter: {
+              select: { parameterName: true, category: true },
+            },
+          },
+          orderBy: { samplingDate: "desc" },
+          take: 8,
+        }),
+      ])
+
+      esmrStats = {
+        totals: {
+          facilities: totalFacilities,
+          locations: totalLocations,
+          samples: totalSamples,
+          parameters: totalParameters,
+          regions: totalRegions,
+        },
+        recentActivity: {
+          samplesLast30Days,
+          samplesLast7Days: 0, // Not needed for dashboard
+        },
+        topParameters: topParameters.map((p) => ({
+          parameterName: p.parameterName,
+          category: p.category,
+          sampleCount: p._count.samples,
+        })),
+        dateRange: {
+          earliest: dateRange._min.samplingDate?.toISOString().split("T")[0] || null,
+          latest: dateRange._max.samplingDate?.toISOString().split("T")[0] || null,
+        },
+        byQualifier: [],
+        byLocationType: [],
+      }
+
+      esmrRecentSamples = recentSamples.map((s) => ({
+        id: s.id,
+        locationPlaceId: s.locationPlaceId,
+        locationCode: s.location.locationCode,
+        facilityPlaceId: s.location.facilityPlaceId,
+        facilityName: s.location.facility.facilityName,
+        parameterName: s.parameter.parameterName,
+        parameterCategory: s.parameter.category,
+        samplingDate: s.samplingDate.toISOString().split("T")[0],
+        samplingTime: "00:00:00",
+        qualifier: s.qualifier,
+        result: s.result?.toString() || null,
+        units: s.units,
+        mdl: null,
+        ml: null,
+        rl: null,
+        analyticalMethod: null,
+        reviewPriorityIndicator: s.reviewPriorityIndicator,
+      }))
+    } catch (error) {
+      console.error("Error fetching eSMR data:", error)
+      // Continue without eSMR data if there's an error
     }
   }
 
@@ -178,9 +239,6 @@ export default async function DashboardPage({
               <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
                 Live Monitoring
               </span>
-              {usingMockData && (
-                <span className="badge-warning ml-2">Demo Mode (Sample Data)</span>
-              )}
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-4 slide-in-bottom">
               Water Quality{" "}
@@ -193,6 +251,23 @@ export default async function DashboardPage({
           </div>
         </div>
       </div>
+
+      {/* Database Error Alert */}
+      {dbError && (
+        <div className="container mx-auto px-4 pt-8">
+          <Card className="border-destructive bg-destructive/5">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <div>
+                  <h3 className="font-semibold text-destructive">Unable to Load Data</h3>
+                  <p className="text-sm text-muted-foreground mt-1">{dbError}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="container mx-auto py-8 px-4 space-y-8">
@@ -211,6 +286,13 @@ export default async function DashboardPage({
         <div className="slide-in-bottom" style={{ animationDelay: "0.3s" }}>
           <StatsCards violations={violations} facilities={facilities} />
         </div>
+
+        {/* eSMR Stats Section */}
+        {esmrStats && (
+          <div className="slide-in-bottom" style={{ animationDelay: "0.35s" }}>
+            <ESMRStatsCards stats={esmrStats} />
+          </div>
+        )}
 
         {/* Map and Data Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -320,6 +402,11 @@ export default async function DashboardPage({
             <ViolationsTable violations={violations} />
           </CardContent>
         </Card>
+
+        {/* eSMR Recent Activity */}
+        {esmrRecentSamples.length > 0 && (
+          <ESMRRecentActivity samples={esmrRecentSamples} />
+        )}
       </div>
     </div>
   )

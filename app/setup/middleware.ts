@@ -2,16 +2,10 @@
 import { NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  const isDev = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
   // const session = await auth()
 
   // Allow setup page for everyone
   if (request.nextUrl.pathname === "/setup") {
-    return null
-  }
-
-  // In dev mode, allow all pages
-  if (isDev) {
     return null
   }
 

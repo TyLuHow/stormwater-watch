@@ -1,0 +1,415 @@
+// eSMR (Electronic Self-Monitoring Report) Data Schema
+// Proposed schema for California Water Board eSMR dataset
+// Based on analysis of 2025 eSMR CSV data (9,999 sample records)
+// Date: November 29, 2025
+
+// This schema represents a star schema optimized for:
+// 1. Preserving source data fidelity (all 29 CSV columns)
+// 2. Efficient querying (strategic indexes, normalized lookups)
+// 3. Data lineage tracking (import history, timestamps)
+// 4. Integration with existing app models (Facility, ConfigPollutant)
+
+// NOTE: This is a standalone schema file for review.
+// To use, merge these models into the main schema.prisma file.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// DIMENSION TABLES
+// =============================================================================
+
+// Regional Water Quality Control Boards
+model ESMRRegion {
+  code String @id @db.VarChar(10) // e.g., "R2"
+  name String @unique @db.VarChar(100) // e.g., "Region 2 - San Francisco Bay"
+
+  facilities ESMRFacility[]
+
+  @@map("esmr_regions")
+}
+
+// Facilities (wastewater treatment plants, discharge points)
+model ESMRFacility {
+  facilityPlaceId Int    @id // CIWQS Place ID (primary identifier)
+  facilityName    String @db.VarChar(200)
+  regionCode      String @db.VarChar(10)
+  region          ESMRRegion @relation(fields: [regionCode], references: [code])
+
+  // Optional fields
+  receivingWaterBody String? @db.VarChar(200)
+
+  // Data lineage
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now()) // Updated on each import
+
+  // Relationships
+  locations ESMRLocation[]
+
+  // Integration point: link to existing Facility model
+  // This could be added later: linkedFacilityId String? (FK to Facility.id)
+
+  @@index([regionCode])
+  @@index([facilityName]) // For text search
+  @@index([receivingWaterBody])
+  @@map("esmr_facilities")
+}
+
+// Monitoring locations within facilities
+model ESMRLocation {
+  locationPlaceId Int    @id // CIWQS Place ID for location
+  facilityPlaceId Int
+  facility        ESMRFacility @relation(fields: [facilityPlaceId], references: [facilityPlaceId], onDelete: Cascade)
+
+  locationCode String             @db.VarChar(50) // e.g., "E-001"
+  locationType ESMRLocationType // Enum
+
+  // Optional fields
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  locationDesc String?  @db.Text
+
+  // Data lineage
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  // Relationships
+  samples ESMRSample[]
+
+  @@index([facilityPlaceId])
+  @@index([locationType])
+  @@map("esmr_locations")
+}
+
+enum ESMRLocationType {
+  EFFLUENT_MONITORING // Effluent Monitoring
+  INFLUENT_MONITORING // Influent Monitoring
+  RECEIVING_WATER_MONITORING // Receiving Water Monitoring
+  RECYCLED_WATER_MONITORING // Recycled Water Monitoring
+  INTERNAL_MONITORING // Internal Monitoring
+
+  @@map("esmr_location_type")
+}
+
+// Parameters (pollutants, measurements)
+model ESMRParameter {
+  id            String  @id @default(cuid())
+  parameterName String  @unique @db.VarChar(200)
+  category      String? @db.VarChar(100) // e.g., "Metals", "Nutrients", "Bacteria"
+
+  // Integration point: link to existing ConfigPollutant
+  canonicalKey String? // Links to ConfigPollutant.key for standardization
+
+  notes String? @db.Text
+
+  samples ESMRSample[]
+
+  @@index([category])
+  @@map("esmr_parameters")
+}
+
+// Analytical methods (EPA/Standard Methods)
+model ESMRAnalyticalMethod {
+  methodCode String  @id @db.VarChar(50) // e.g., "A9221B"
+  methodName String  @db.VarChar(500)
+  category   String? @db.VarChar(100)
+  notes      String? @db.Text
+
+  samples ESMRSample[]
+
+  @@map("esmr_analytical_methods")
+}
+
+// =============================================================================
+// FACT TABLE
+// =============================================================================
+
+// Individual sample measurements (millions of records)
+model ESMRSample {
+  id String @id @default(cuid())
+
+  // Foreign keys
+  locationPlaceId     Int
+  location            ESMRLocation        @relation(fields: [locationPlaceId], references: [locationPlaceId], onDelete: Cascade)
+  parameterId         String
+  parameter           ESMRParameter       @relation(fields: [parameterId], references: [id])
+  analyticalMethodId  String?
+  analyticalMethod    ESMRAnalyticalMethod? @relation(fields: [analyticalMethodId], references: [methodCode])
+
+  // Temporal data
+  samplingDate DateTime @db.Date
+  samplingTime DateTime @db.Time
+  analysisDate DateTime @db.Date
+  analysisTime DateTime @db.Time
+
+  // Result data
+  qualifier       ESMRQualifier // Enum
+  result          Decimal?      @db.Decimal(18, 6) // Nullable when ND/DNQ
+  units           String        @db.VarChar(50)
+  calculatedMethod String?      @db.VarChar(100) // e.g., "Daily Maximum"
+
+  // Detection limits (often null)
+  mdl Decimal? @db.Decimal(18, 6) // Method Detection Limit
+  ml  Decimal? @db.Decimal(18, 6) // Minimum Level
+  rl  Decimal? @db.Decimal(18, 6) // Reporting Limit
+
+  // Quality assurance
+  reviewPriorityIndicator Boolean? // Maps Y/N to boolean
+  qaCodes                 String?  @db.VarChar(50)
+  comments                String?  @db.Text
+
+  // Metadata
+  reportName     String @db.VarChar(200) // e.g., "Monthly SMR ( MONNPDES ) report for February 2025"
+  smrDocumentId  Int // Links to report submission in CIWQS
+
+  // Data lineage
+  createdAt DateTime @default(now())
+
+  // Strategic indexes for common queries
+  @@index([locationPlaceId, samplingDate]) // Time-series by location
+  @@index([parameterId, samplingDate]) // Time-series by parameter
+  @@index([samplingDate]) // Date range queries
+  @@index([smrDocumentId]) // Group by report
+  @@index([qualifier]) // Filter for detections
+  @@index([reviewPriorityIndicator]) // Priority reviews
+  @@map("esmr_samples")
+}
+
+enum ESMRQualifier {
+  DETECTED // "=" - Detected at reported value
+  LESS_THAN // "<" - Less than detection limit
+  NOT_DETECTED // "ND" - Not Detected
+  DETECTED_NOT_QUANTIFIED // "DNQ" - Detected but not quantified
+
+  @@map("esmr_qualifier")
+}
+
+// =============================================================================
+// AUDIT/LINEAGE TABLES
+// =============================================================================
+
+// Track data import history
+model ESMRImport {
+  id String @id @default(cuid())
+
+  importDate DateTime @default(now())
+  sourceUrl  String   @db.Text
+  sourceFile String   @db.VarChar(500)
+  dataYear   Int // Which year's data was imported
+
+  // Import statistics
+  recordsProcessed Int
+  recordsInserted  Int
+  recordsUpdated   Int
+  recordsErrored   Int
+  errors           String? @db.Text // JSON array of error messages
+
+  // Duration tracking
+  startedAt   DateTime
+  completedAt DateTime?
+
+  notes String? @db.Text
+
+  @@index([importDate])
+  @@index([dataYear])
+  @@map("esmr_imports")
+}
+
+// Optional: Error log for malformed records
+model ESMRImportError {
+  id String @id @default(cuid())
+
+  importId String
+  rowNumber Int
+  rawData  String @db.Text
+  errorMessage String @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([importId])
+  @@map("esmr_import_errors")
+}
+
+// =============================================================================
+// INTEGRATION HELPERS (Optional)
+// =============================================================================
+
+// Optional: Map eSMR facilities to existing Facility model
+// Uncomment when ready to integrate
+//
+// model ESMRFacilityLink {
+//   esmrFacilityPlaceId Int    @unique
+//   esmrFacility        ESMRFacility @relation(fields: [esmrFacilityPlaceId], references: [facilityPlaceId], onDelete: Cascade)
+//
+//   appFacilityId String
+//   appFacility   Facility @relation(fields: [appFacilityId], references: [id], onDelete: Cascade)
+//
+//   confidence String // "HIGH", "MEDIUM", "LOW" - how confident is this mapping?
+//   notes      String? @db.Text
+//   createdAt  DateTime @default(now())
+//
+//   @@map("esmr_facility_links")
+// }
+
+// =============================================================================
+// NOTES ON SCHEMA DESIGN
+// =============================================================================
+
+/*
+DESIGN DECISIONS:
+
+1. Star Schema
+   - Central fact table: ESMRSample (millions of records)
+   - Dimension tables: ESMRFacility, ESMRLocation, ESMRParameter, ESMRAnalyticalMethod
+   - Optimized for analytical queries (time-series, aggregations)
+
+2. Data Types
+   - Use Decimal for all numeric measurements to preserve precision
+   - Use separate Date and Time fields (matches source data)
+   - Use CUID for generated IDs, preserve source IDs as integers
+
+3. Nullability
+   - Matches source data patterns (don't enforce constraints source doesn't have)
+   - analyticalMethodId: 60% null in source
+   - result: 21% null (when ND/DNQ)
+   - mdl/ml/rl: 72-99% null
+   - coordinates: 87% null
+
+4. Indexes
+   - Focus on common query patterns:
+     - Time-series by location/parameter
+     - Filtering by date range, qualifier, review flag
+     - Grouping by report
+   - Avoid over-indexing (slows inserts)
+
+5. Enums vs Lookup Tables
+   - ESMRLocationType: Enum (5 stable values)
+   - ESMRQualifier: Enum (4 stable values)
+   - ESMRRegion: Table (allows expansion, metadata)
+   - ESMRParameter: Table (238+ values, may grow)
+   - ESMRAnalyticalMethod: Table (66+ values, may grow)
+
+6. Data Lineage
+   - createdAt: When record first imported
+   - lastSeenAt: When record last seen in import (detects deletions)
+   - ESMRImport: Full audit trail of imports
+
+7. Performance Considerations
+   - Consider partitioning ESMRSample by samplingDate (year)
+   - Consider materialized views for common aggregations
+   - Batch inserts during import (5000-10000 records at a time)
+   - Use COPY for bulk imports instead of INSERT
+
+8. Integration Strategy
+   - Separate namespace (ESMR prefix) to avoid conflicts
+   - Clean integration points via optional ESMRFacilityLink
+   - Can coexist with existing Facility/Sample models
+   - Gradual migration path via views
+
+9. Missing from Source Data
+   - No permit numbers (need to link via NPDES Permits spreadsheet)
+   - No permit limits (need separate dataset or manual config)
+   - No facility addresses (in facility table, not sample data)
+   - Incomplete coordinates (only ~13% have lat/lon)
+
+10. Future Enhancements
+    - Add permit limit data (new table ESMRPermitLimits)
+    - Add facility addresses (enhance ESMRFacility)
+    - Add parameter categories/groupings
+    - Add benchmark/threshold calculations
+    - Add compliance status tracking
+    - Add data quality scoring
+*/
+
+// =============================================================================
+// EXAMPLE QUERIES
+// =============================================================================
+
+/*
+// Get all samples for a facility in date range
+const samples = await prisma.esmrSample.findMany({
+  where: {
+    location: {
+      facilityPlaceId: 222130
+    },
+    samplingDate: {
+      gte: new Date('2025-01-01'),
+      lte: new Date('2025-12-31')
+    }
+  },
+  include: {
+    location: {
+      include: {
+        facility: true
+      }
+    },
+    parameter: true
+  },
+  orderBy: {
+    samplingDate: 'asc'
+  }
+});
+
+// Get all detections (exclude ND/DNQ) for a parameter
+const detections = await prisma.esmrSample.findMany({
+  where: {
+    parameter: {
+      parameterName: 'Total Coliform'
+    },
+    qualifier: {
+      in: ['DETECTED', 'LESS_THAN']
+    }
+  },
+  include: {
+    location: {
+      include: {
+        facility: true
+      }
+    }
+  }
+});
+
+// Get facilities by region
+const facilities = await prisma.esmrFacility.findMany({
+  where: {
+    regionCode: 'R2'
+  },
+  include: {
+    region: true,
+    locations: {
+      include: {
+        _count: {
+          select: { samples: true }
+        }
+      }
+    }
+  }
+});
+
+// Get sample count by parameter (aggregation)
+const parameterCounts = await prisma.esmrSample.groupBy({
+  by: ['parameterId'],
+  _count: {
+    id: true
+  },
+  orderBy: {
+    _count: {
+      id: 'desc'
+    }
+  }
+});
+
+// Get latest import status
+const latestImport = await prisma.esmrImport.findFirst({
+  orderBy: {
+    importDate: 'desc'
+  }
+});
+*/

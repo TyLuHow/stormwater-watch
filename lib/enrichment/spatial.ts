@@ -17,7 +17,6 @@ import type {
   MS4Feature,
   SpatialEnrichmentOptions,
 } from "./types"
-import { DEV_MODE } from "@/lib/dev-mode"
 
 // In-memory cache for geodata to avoid repeated file loads
 let geodataCache: Map<string, GeoDataset> = new Map()
@@ -30,17 +29,6 @@ async function loadGeodata(type: "county" | "huc12" | "dac" | "ms4"): Promise<Ge
   const cached = geodataCache.get(type)
   if (cached?.loaded) {
     return cached
-  }
-
-  // In dev mode, return mock data
-  if (DEV_MODE) {
-    console.log(`[DEV] Using mock ${type} geodata`)
-    return {
-      name: type,
-      type,
-      data: { type: "FeatureCollection", features: [] },
-      loaded: true,
-    }
   }
 
   const dataset: GeoDataset = {

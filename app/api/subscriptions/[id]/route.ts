@@ -2,16 +2,12 @@ import { type NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 
-const DEV_MODE = process.env.DEV_MODE === "true" || !process.env.SUPABASE_URL
-
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  if (!DEV_MODE) {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -23,11 +19,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    if (!DEV_MODE) {
-      const session = await auth()
-      if (subscription.userId !== session?.user?.id) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 })
-      }
+    if (subscription.userId !== session?.user?.id) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
     await prisma.subscription.delete({
@@ -44,11 +37,9 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  if (!DEV_MODE) {
-    const session = await auth()
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -61,11 +52,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
-    if (!DEV_MODE) {
-      const session = await auth()
-      if (subscription.userId !== session?.user?.id) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 })
-      }
+    if (subscription.userId !== session?.user?.id) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
     }
 
     const updated = await prisma.subscription.update({
