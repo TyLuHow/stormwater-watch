@@ -30,6 +30,7 @@
     "enrich": "curl -X POST http://localhost:3000/api/enrichment/spatial -H 'Content-Type: application/json' -d '{\"mode\":\"all\"}'",
     "import:esmr": "tsx scripts/import-esmr.ts",
     "link:facilities": "tsx scripts/link-esmr-facilities.ts",
+    "db:create-facilities": "tsx scripts/create-facilities-from-esmr.ts",
     "supabase:install": "./scripts/install-supabase-cli.sh",
     "supabase:login": "./scripts/supabase-login.sh",
     "supabase:pull": "supabase db pull",
