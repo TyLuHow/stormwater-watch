@@ -1,0 +1,15 @@
+# Exclude large data files from Vercel deployment
+data/
+output/
+
+# Exclude development files
+*.log
+.env.local
+.DS_Store
+
+# Exclude test files
+**/__tests__/
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     // Pollutants filter
     if (params.pollutants) {
       const pollutants = params.pollutants.split(",").filter(Boolean)
-      where.pollutant = { in: pollutants }
+      where.pollutantKey = { in: pollutants }
     }
 
     // Reporting year filter
@@ -125,9 +125,9 @@ export async function GET(request: NextRequest) {
     // Get unique values for filter options
     const [uniquePollutants, uniqueCounties, uniqueHuc12s, uniqueMs4s, uniqueYears] = await Promise.all([
       prisma.violationEvent.findMany({
-        select: { pollutant: true },
-        distinct: ["pollutant"],
-        orderBy: { pollutant: "asc" },
+        select: { pollutantKey: true },
+        distinct: ["pollutantKey"],
+        orderBy: { pollutantKey: "asc" as any },
       }),
       prisma.facility.findMany({
         where: { county: { not: null } },
@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
         hasMore: offset + limit < total,
       },
       filters: {
-        pollutants: uniquePollutants.map((v) => v.pollutant),
+        pollutants: uniquePollutants.map((v) => v.pollutantKey),
         counties: uniqueCounties.map((f) => f.county).filter(Boolean),
         huc12s: uniqueHuc12s.map((f) => f.watershedHuc12).filter(Boolean),
         ms4s: uniqueMs4s.map((f) => f.ms4).filter(Boolean),
