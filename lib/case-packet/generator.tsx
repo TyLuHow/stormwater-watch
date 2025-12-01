@@ -34,7 +34,7 @@ export async function generateCasePacket(
     const samples = await prisma.sample.findMany({
       where: {
         facilityId: violation.facilityId,
-        pollutant: violation.pollutant,
+        pollutant: violation.pollutantKey,
         reportingYear: violation.reportingYear,
         sampleDate: {
           gte: violation.firstDate,
@@ -88,12 +88,12 @@ export async function generateCasePacket(
  */
 export function getCasePacketFilename(
   facility: { name: string; permitId: string },
-  violation: { pollutant: string; reportingYear: string }
+  violation: { pollutantKey: string; reportingYear: string }
 ): string {
   const facilityName = facility.name
     .replace(/[^a-z0-9]/gi, "_")
     .substring(0, 30)
-  const pollutant = violation.pollutant.replace(/[^a-z0-9]/gi, "_")
+  const pollutant = violation.pollutantKey.replace(/[^a-z0-9]/gi, "_")
   const date = new Date().toISOString().split("T")[0]
 
   return `case-packet_${facilityName}_${pollutant}_${violation.reportingYear}_${date}.pdf`

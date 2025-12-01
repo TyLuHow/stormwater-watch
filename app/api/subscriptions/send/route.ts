@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         <h2>${matched.length} new stormwater exceedances</h2>
         <table border="1" cellpadding="10">
           <tr><th>Facility</th><th>Pollutant</th><th>Max Ratio</th></tr>
-          ${matched.map((e) => `<tr><td>${e.facility.name}</td><td>${e.pollutant}</td><td>${Number(e.maxRatio).toFixed(2)}x</td></tr>`).join("")}
+          ${matched.map((e) => `<tr><td>${e.facility.name}</td><td>${e.pollutantKey}</td><td>${Number(e.maxRatio).toFixed(2)}x</td></tr>`).join("")}
         </table>
       `
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `*${e.facility.name}*\n${e.pollutant}: ${Number(e.maxRatio).toFixed(2)}x (${e.count} exceedances)`,
+          text: `*${e.facility.name}*\n${e.pollutantKey}: ${Number(e.maxRatio).toFixed(2)}x (${e.count} exceedances)`,
         },
       }))
 

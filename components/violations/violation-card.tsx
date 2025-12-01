@@ -18,7 +18,7 @@ export function ViolationCard({ violation, onDismiss }: ViolationCardProps) {
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg">{violation.facility.name}</CardTitle>
-            <CardDescription>{violation.pollutant}</CardDescription>
+            <CardDescription>{violation.pollutantKey}</CardDescription>
           </div>
           <div className="flex gap-2">
             {violation.impairedWater && <Badge variant="destructive">Impaired Water</Badge>}

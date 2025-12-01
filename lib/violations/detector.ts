@@ -78,9 +78,9 @@ export async function recomputeViolations(
 
         await prisma.violationEvent.upsert({
           where: {
-            facilityId_pollutant_reportingYear: {
+            facilityId_pollutantKey_reportingYear: {
               facilityId: fId,
-              pollutant: group[0].pollutant,
+              pollutantKey: group[0].pollutant,
               reportingYear: year,
             },
           },
@@ -92,7 +92,7 @@ export async function recomputeViolations(
           },
           create: {
             facilityId: fId,
-            pollutant: group[0].pollutant,
+            pollutantKey: group[0].pollutant,
             firstDate: group[0].sampleDate,
             lastDate: group[group.length - 1].sampleDate,
             count: group.length,
@@ -155,10 +155,10 @@ export async function getViolationStats() {
         count: events.filter((e) => e.facility.county === county).length,
       }))
       .sort((a, b) => b.count - a.count),
-    byPollutant: [...new Set(events.map((e) => e.pollutant))]
+    byPollutant: [...new Set(events.map((e) => e.pollutantKey))]
       .map((pollutant) => ({
         pollutant,
-        count: events.filter((e) => e.pollutant === pollutant).length,
+        count: events.filter((e) => e.pollutantKey === pollutant).length,
       }))
       .sort((a, b) => b.count - a.count),
   }

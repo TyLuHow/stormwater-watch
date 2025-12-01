@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic'
 // Type definitions for facility data
 interface ViolationEvent {
   id: string
-  pollutant: string
+  pollutantKey: string
   count: number
   maxRatio: number | { toNumber(): number }
   reportingYear: string
@@ -129,7 +129,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
     (v: ViolationEvent) => v.reportingYear === new Date().getFullYear().toString()
   ).length
   const worstViolation = facility.violationEvents[0]
-  const worstPollutant = worstViolation?.pollutant || "N/A"
+  const worstPollutant = worstViolation?.pollutantKey || "N/A"
   const maxRatio = worstViolation ? Number(worstViolation.maxRatio) : 0
 
   // Get unique pollutants for charts
@@ -369,7 +369,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
 
       {/* Charts for each pollutant with violations */}
       {pollutants.map((pollutant: string) => {
-        const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutant === pollutant)
+        const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutantKey === pollutant)
         if (!violation) return null
         return <SampleChart key={pollutant} samples={facility.samples as any} pollutant={pollutant} />
       })}
@@ -386,7 +386,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
               {facility.violationEvents.map((violation: ViolationEvent) => (
                 <div key={violation.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
-                    <p className="font-medium">{violation.pollutant}</p>
+                    <p className="font-medium">{violation.pollutantKey}</p>
                     <p className="text-sm text-muted-foreground">
                       {violation.count} exceedances • Max: {Number(violation.maxRatio).toFixed(2)}× NAL
                     </p>
@@ -422,7 +422,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
               <TableBody>
                 {facility.violationEvents.map((v: ViolationEvent) => (
                   <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.pollutant}</TableCell>
+                    <TableCell className="font-medium">{v.pollutantKey}</TableCell>
                     <TableCell>
                       <Badge variant={v.count >= 3 ? "destructive" : "secondary"}>
                         {v.count} {v.count >= 3 ? " (Repeat)" : ""}

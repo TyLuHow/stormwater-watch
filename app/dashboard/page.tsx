@@ -44,9 +44,9 @@ export default async function DashboardPage({
     const whereClause: any = {
       dismissed: hideDismissed ? false : undefined,
       ...(county && { facility: { county } }),
-      ...(pollutant && { pollutant }),
+      ...(pollutant && { pollutantKey: pollutant }),
       ...(counties.length > 0 && { facility: { county: { in: counties } } }),
-      ...(pollutants.length > 0 && { pollutant: { in: pollutants } }),
+      ...(pollutants.length > 0 && { pollutantKey: { in: pollutants } }),
       ...(huc12s.length > 0 && { facility: { watershedHuc12: { in: huc12s } } }),
       ...(ms4s.length > 0 && { facility: { ms4: { in: ms4s } } }),
       ...(years.length > 0 && { reportingYear: { in: years.map(y => parseInt(y)) } }),
@@ -95,13 +95,13 @@ export default async function DashboardPage({
     try {
       const [countiesRes, pollutantsRes, huc12sRes, ms4sRes, yearsRes] = await Promise.all([
         prisma.facility.findMany({ select: { county: true }, distinct: ['county'] }),
-        prisma.violationEvent.findMany({ select: { pollutant: true }, distinct: ['pollutant'] }),
+        prisma.violationEvent.findMany({ select: { pollutantKey: true }, distinct: ['pollutantKey'] }),
         prisma.facility.findMany({ select: { watershedHuc12: true }, distinct: ['watershedHuc12'] }),
         prisma.facility.findMany({ select: { ms4: true }, distinct: ['ms4'] }),
         prisma.violationEvent.findMany({ select: { reportingYear: true }, distinct: ['reportingYear'] }),
       ])
       availableCounties = countiesRes.map(x => x.county).filter(Boolean) as string[]
-      availablePollutants = pollutantsRes.map(x => x.pollutant).filter(Boolean) as string[]
+      availablePollutants = pollutantsRes.map(x => x.pollutantKey).filter(Boolean) as string[]
       availableHuc12s = huc12sRes.map(x => x.watershedHuc12).filter(Boolean) as string[]
       availableMs4s = ms4sRes.map(x => x.ms4).filter(Boolean) as string[]
       availableYears = yearsRes.map(x => x.reportingYear.toString())

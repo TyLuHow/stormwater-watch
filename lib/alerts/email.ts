@@ -112,7 +112,7 @@ function generateEmailHTML(
           ${violations.map((v) => `
             <tr>
               <td><strong>${v.facility.name}</strong><br><small>${v.facility.permitId}</small></td>
-              <td>${v.pollutant}</td>
+              <td>${v.pollutantKey}</td>
               <td>${Number(v.maxRatio).toFixed(2)}×</td>
               <td>${v.count}</td>
               <td>${v.facility.county || "N/A"}</td>
@@ -169,7 +169,7 @@ ${violations
   .map(
     (v) => `
 - ${v.facility.name} (${v.facility.permitId})
-  Pollutant: ${v.pollutant}
+  Pollutant: ${v.pollutantKey}
   Max Ratio: ${Number(v.maxRatio).toFixed(2)}×
   Count: ${v.count}
   County: ${v.facility.county || "N/A"}

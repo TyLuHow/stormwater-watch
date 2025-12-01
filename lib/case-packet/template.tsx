@@ -161,7 +161,7 @@ export const CasePacketDocument: React.FC<{ data: CasePacketData }> = ({ data })
           <Text style={styles.sectionTitle}>2. VIOLATION SUMMARY</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Pollutant:</Text>
-            <Text style={styles.value}>{violation.pollutant}</Text>
+            <Text style={styles.value}>{violation.pollutantKey}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Reporting Year:</Text>

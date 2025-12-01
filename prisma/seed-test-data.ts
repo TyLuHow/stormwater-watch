@@ -114,9 +114,9 @@ async function main() {
   // TSS violation (2 exceedances)
   const tssViolation = await prisma.violationEvent.upsert({
     where: {
-      facilityId_pollutant_reportingYear: {
+      facilityId_pollutantKey_reportingYear: {
         facilityId: testFacility.id,
-        pollutant: "TSS",
+        pollutantKey: "TSS",
         reportingYear: new Date().getFullYear().toString(),
       },
     },
@@ -128,7 +128,7 @@ async function main() {
     },
     create: {
       facilityId: testFacility.id,
-      pollutant: "TSS",
+      pollutantKey: "TSS",
       firstDate: thirtyDaysAgo,
       lastDate: new Date(thirtyDaysAgo.getTime() + 5 * 24 * 60 * 60 * 1000),
       count: 2,
@@ -141,15 +141,15 @@ async function main() {
   })
 
   console.log(
-    `✓ Violation: ${tssViolation.pollutant} (${tssViolation.count} exceedances, max ratio: ${tssViolation.maxRatio})`,
+    `✓ Violation: ${tssViolation.pollutantKey} (${tssViolation.count} exceedances, max ratio: ${tssViolation.maxRatio})`,
   )
 
   // Copper violation (1 exceedance)
   const copperViolation = await prisma.violationEvent.upsert({
     where: {
-      facilityId_pollutant_reportingYear: {
+      facilityId_pollutantKey_reportingYear: {
         facilityId: testFacility.id,
-        pollutant: "COPPER",
+        pollutantKey: "COPPER",
         reportingYear: new Date().getFullYear().toString(),
       },
     },
@@ -160,7 +160,7 @@ async function main() {
     },
     create: {
       facilityId: testFacility.id,
-      pollutant: "COPPER",
+      pollutantKey: "COPPER",
       firstDate: new Date(thirtyDaysAgo.getTime() + 10 * 24 * 60 * 60 * 1000),
       lastDate: new Date(thirtyDaysAgo.getTime() + 10 * 24 * 60 * 60 * 1000),
       count: 1,
@@ -173,7 +173,7 @@ async function main() {
   })
 
   console.log(
-    `✓ Violation: ${copperViolation.pollutant} (${copperViolation.count} exceedance, max ratio: ${copperViolation.maxRatio})`,
+    `✓ Violation: ${copperViolation.pollutantKey} (${copperViolation.count} exceedance, max ratio: ${copperViolation.maxRatio})`,
   )
 
   console.log("\n✅ Test data seeding complete!")

@@ -90,7 +90,7 @@ function generateSlackBlocks(data: SlackAlertData): any[] {
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `*${facility.name}* (${facility.permitId})\n*Pollutant:* ${violation.pollutant}\n*Max Ratio:* ${Number(violation.maxRatio).toFixed(2)}× NAL\n*Count:* ${violation.count} exceedance${violation.count > 1 ? "s" : ""}\n*County:* ${facility.county || "N/A"}\n${badges.length > 0 ? badges.join(" • ") : ""}`,
+        text: `*${facility.name}* (${facility.permitId})\n*Pollutant:* ${violation.pollutantKey}\n*Max Ratio:* ${Number(violation.maxRatio).toFixed(2)}× NAL\n*Count:* ${violation.count} exceedance${violation.count > 1 ? "s" : ""}\n*County:* ${facility.county || "N/A"}\n${badges.length > 0 ? badges.join(" • ") : ""}`,
       },
       accessory: {
         type: "button",

@@ -218,7 +218,7 @@ export async function testSubscriptionMatch(
   const mockViolation = {
     id: "test",
     facilityId: facility.id,
-    pollutant: "test",
+    pollutantKey: "test",
     firstDate: new Date(),
     lastDate: new Date(),
     count: 1,
@@ -228,6 +228,8 @@ export async function testSubscriptionMatch(
     dismissed: false,
     notes: null,
     createdAt: new Date(),
+    maxSeverity: "MODERATE" as const,
+    updatedAt: new Date(),
     facility,
   }
 
