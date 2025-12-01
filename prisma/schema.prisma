@@ -44,9 +44,10 @@ model Facility {
   esmrFacilityId Int?
   esmrFacility   ESMRFacility? @relation(fields: [esmrFacilityId], references: [facilityPlaceId])
 
-  samples         Sample[]
-  violationEvents ViolationEvent[]
-  alerts          Alert[]
+  samples          Sample[]
+  violationEvents  ViolationEvent[]
+  violationSamples ViolationSample[]
+  alerts           Alert[]
 
   @@index([county])
   @@index([watershedHuc12])
@@ -80,28 +81,107 @@ model Sample {
 }
 
 model ViolationEvent {
-  id            String   @id @default(cuid())
+  id            String            @id @default(cuid())
   facilityId    String
-  facility      Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
-  pollutant     String
-  firstDate     DateTime @db.Date
-  lastDate      DateTime @db.Date
+  facility      Facility          @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  pollutantKey  String
+  pollutant     ConfigPollutant   @relation(fields: [pollutantKey], references: [key])
+  firstDate     DateTime          @db.Date
+  lastDate      DateTime          @db.Date
   count         Int
-  maxRatio      Decimal  @db.Decimal(8, 2)
+  maxRatio      Decimal           @db.Decimal(8, 2)
+  maxSeverity   ViolationSeverity @default(MODERATE)
   reportingYear String
-  impairedWater Boolean  @default(false)
-  dismissed     Boolean  @default(false)
-  notes         String?  @db.Text
-  createdAt     DateTime @default(now())
-  alerts        Alert[]
+  impairedWater Boolean           @default(false)
+  dismissed     Boolean           @default(false)
+  notes         String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  @@unique([facilityId, pollutant, reportingYear])
-  @@index([facilityId, pollutant, reportingYear])
+  alerts  Alert[]
+  samples ViolationSample[]
+
+  @@unique([facilityId, pollutantKey, reportingYear])
+  @@index([facilityId, pollutantKey, reportingYear])
   @@index([dismissed])
   @@index([facilityId])
-  @@index([pollutant])
+  @@index([pollutantKey])
   @@index([reportingYear])
   @@index([maxRatio])
+  @@index([maxSeverity])
+}
+
+model ViolationSample {
+  id String @id @default(cuid())
+
+  // Link to aggregate violation event
+  violationEventId String
+  violationEvent   ViolationEvent @relation(fields: [violationEventId], references: [id], onDelete: Cascade)
+
+  // Link to facility (denormalized for query efficiency)
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  // Link to source eSMR sample
+  esmrSampleId String
+  esmrSample   ESMRSample @relation(fields: [esmrSampleId], references: [id], onDelete: Cascade)
+
+  // Link to benchmark that was exceeded
+  benchmarkId String
+  benchmark   PollutantBenchmark @relation(fields: [benchmarkId], references: [id])
+
+  // Pollutant key (denormalized for filtering)
+  pollutantKey String
+
+  // Violation details
+  detectedAt      DateTime          @db.Date
+  measuredValue   Decimal           @db.Decimal(18, 6)
+  measuredUnit    String            @db.VarChar(50)
+  benchmarkValue  Decimal           @db.Decimal(18, 6)
+  benchmarkUnit   String            @db.VarChar(50)
+  exceedanceRatio Decimal           @db.Decimal(8, 2)
+  severity        ViolationSeverity
+
+  // Compliance tracking
+  status      ViolationStatus @default(OPEN)
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  reviewNotes String?         @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ensure no duplicate violations for the same sample
+  @@unique([esmrSampleId, benchmarkId])
+  @@index([violationEventId])
+  @@index([facilityId])
+  @@index([esmrSampleId])
+  @@index([benchmarkId])
+  @@index([pollutantKey])
+  @@index([detectedAt])
+  @@index([status])
+  @@index([severity])
+  @@index([facilityId, pollutantKey, detectedAt])
+  @@index([status, severity])
+  @@map("violation_samples")
+}
+
+enum ViolationStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+
+  @@map("violation_status")
+}
+
+enum ViolationSeverity {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+
+  @@map("violation_severity")
 }
 
 model Subscription {
@@ -175,7 +255,8 @@ model ConfigPollutant {
   category      String?  @db.VarChar(100)
   notes         String?  @db.Text
 
-  benchmarks PollutantBenchmark[]
+  benchmarks      PollutantBenchmark[]
+  violationEvents ViolationEvent[]
 
   @@index([category])
 }
@@ -204,6 +285,8 @@ model PollutantBenchmark {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  violationSamples ViolationSample[]
 
   @@unique([pollutantKey, benchmarkType, waterType])
   @@index([pollutantKey])
@@ -354,6 +437,8 @@ model ESMRSample {
   smrDocumentId Int
 
   createdAt DateTime @default(now())
+
+  violationSamples ViolationSample[]
 
   @@unique([locationPlaceId, parameterId, samplingDate, samplingTime, smrDocumentId], name: "esmr_sample_unique")
   @@index([locationPlaceId, samplingDate])
