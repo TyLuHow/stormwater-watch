@@ -1,6 +1,14 @@
 /**
- * Mock facilities for testing
- * Moved from lib/dev-mode.ts to test fixtures
+ * Mock facilities for TESTING ONLY
+ *
+ * ⚠️  WARNING: This file is for unit/integration tests only.
+ * Do NOT use this data in production or seed files.
+ *
+ * The application should use real eSMR facility data imported via:
+ *   npm run import:esmr
+ *
+ * These mock facilities are intentionally fake and should never appear
+ * in the production database.
  */
 
 import { Decimal } from "@prisma/client/runtime/library"

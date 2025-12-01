@@ -1,6 +1,14 @@
 /**
- * Mock violations for testing
- * Moved from lib/dev-mode.ts to test fixtures
+ * Mock violations for TESTING ONLY
+ *
+ * ⚠️  WARNING: This file is for unit/integration tests only.
+ * Do NOT use this data in production or seed files.
+ *
+ * The application should use real violation data computed from
+ * actual eSMR sample data.
+ *
+ * These mock violations are intentionally fake and should never appear
+ * in the production database.
  */
 
 import { Decimal } from "@prisma/client/runtime/library"

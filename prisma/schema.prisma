@@ -300,6 +300,7 @@ model ESMRSample {
 
   createdAt DateTime @default(now())
 
+  @@unique([locationPlaceId, parameterId, samplingDate, samplingTime, smrDocumentId], name: "esmr_sample_unique")
   @@index([locationPlaceId, samplingDate])
   @@index([parameterId, samplingDate])
   @@index([samplingDate])

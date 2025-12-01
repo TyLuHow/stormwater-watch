@@ -10,33 +10,49 @@ import { prisma } from "@/lib/prisma"
 
 // data.ca.gov CKAN API endpoint
 const CKAN_API_URL = "https://data.ca.gov/api/3/action/datastore_search_sql"
-const ESMR_RESOURCE_ID = "5ebbd97a-ffa9-4b75-8904-80e71a5e92c3"
+
+// Year-specific resource IDs for eSMR data (zipped CSV doesn't support SQL API)
+const ESMR_RESOURCE_IDS: Record<number, string> = {
+  2025: "176a58bf-6f5d-4e3f-9ed9-592a509870eb",
+  2024: "7adb8aea-62fb-412f-9e67-d13b0729222f",
+  2023: "65eb7023-86b6-4960-b714-5f6574d43556",
+}
+
+// Get resource ID for current year, fallback to 2025
+function getResourceId(): string {
+  const currentYear = new Date().getFullYear()
+  return ESMR_RESOURCE_IDS[currentYear] || ESMR_RESOURCE_IDS[2025]
+}
 
 interface ESMRAPIRecord {
   facility_place_id: string
   facility_name: string
-  region_code: string
-  region_name: string
+  region: string  // e.g. "Region 2 - San Francisco Bay"
   location_place_id: string
-  location_code: string
-  location_name: string
-  location_type: string
+  location: string  // location code
+  location_place_type: string  // e.g. "Effluent Monitoring"
+  location_desc: string
   latitude: string
   longitude: string
-  parameter_name: string
-  parameter_code: string
-  parameter_category: string
+  parameter: string  // parameter name
+  analytical_method_code: string
+  analytical_method: string
+  calculated_method: string
   sampling_date: string
   sampling_time: string
+  analysis_date: string
+  analysis_time: string
   qualifier: string
   result: string
   units: string
   mdl: string
   ml: string
   rl: string
-  analytical_method: string
   review_priority_indicator: string
+  qa_codes: string
+  comments: string
   report_name: string
+  receiving_water_body: string
   smr_document_id: string
 }
 
@@ -69,8 +85,9 @@ export async function GET(request: NextRequest) {
 
     // Query the CKAN API for new records
     // Note: CKAN SQL API has a limit, so we fetch in batches
+    const resourceId = getResourceId()
     const sql = `
-      SELECT * FROM "${ESMR_RESOURCE_ID}"
+      SELECT * FROM "${resourceId}"
       WHERE sampling_date >= '${sinceDateStr}'
       ORDER BY sampling_date DESC
       LIMIT 5000
@@ -78,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     const apiUrl = `${CKAN_API_URL}?sql=${encodeURIComponent(sql)}`
 
-    console.log("📡 Querying data.ca.gov API...")
+    console.log(`📡 Querying data.ca.gov API (resource: ${resourceId})...`)
     const response = await fetch(apiUrl, {
       headers: {
         "User-Agent": "StormwaterWatch/1.0 (tylerhow@gmail.com)",
@@ -142,19 +159,29 @@ export async function GET(request: NextRequest) {
     // Process each record
     for (const record of records) {
       try {
-        // Ensure region exists
-        const regionCode = record.region_code
+        // Parse region code from "Region 2 - San Francisco Bay" -> "R2"
+        // Match patterns like "Region 2", "Region 5F", "Region 6V"
+        const regionMatch = record.region?.match(/Region\s+(\d+[A-Z]?)/)
+        const regionNum = regionMatch ? regionMatch[1] : "0"
+        const regionCode = `R${regionNum}` // Format as R2, R5F, etc.
+        const regionName = record.region || `Region ${regionNum}`
+
         if (regionCode && !existingRegions.has(regionCode)) {
-          await prisma.eSMRRegion.upsert({
-            where: { code: regionCode },
-            update: {},
-            create: {
-              code: regionCode,
-              name: record.region_name || regionCode,
-            },
-          })
+          try {
+            await prisma.eSMRRegion.upsert({
+              where: { code: regionCode },
+              update: {},
+              create: {
+                code: regionCode,
+                name: regionName,
+              },
+            })
+            results.regionsCreated++
+          } catch (e: any) {
+            // Region already exists (unique constraint on name), that's fine
+            if (e.code !== "P2002") throw e
+          }
           existingRegions.add(regionCode)
-          results.regionsCreated++
         }
 
         // Ensure facility exists
@@ -169,6 +196,7 @@ export async function GET(request: NextRequest) {
               facilityPlaceId,
               facilityName: record.facility_name || `Facility ${facilityPlaceId}`,
               regionCode: regionCode || "0",
+              receivingWaterBody: record.receiving_water_body !== "NA" ? record.receiving_water_body : null,
             },
           })
           existingFacilities.add(facilityPlaceId)
@@ -186,7 +214,7 @@ export async function GET(request: NextRequest) {
           // Map location type to enum
           type LocationType = "EFFLUENT_MONITORING" | "INFLUENT_MONITORING" | "RECEIVING_WATER_MONITORING" | "RECYCLED_WATER_MONITORING" | "INTERNAL_MONITORING" | "GROUNDWATER_MONITORING"
           let locationType: LocationType = "EFFLUENT_MONITORING"
-          const lt = (record.location_type || "").toUpperCase()
+          const lt = (record.location_place_type || "").toUpperCase()
           if (lt.includes("EFFLUENT")) locationType = "EFFLUENT_MONITORING"
           else if (lt.includes("INFLUENT")) locationType = "INFLUENT_MONITORING"
           else if (lt.includes("RECEIVING")) locationType = "RECEIVING_WATER_MONITORING"
@@ -200,30 +228,31 @@ export async function GET(request: NextRequest) {
             create: {
               locationPlaceId,
               facilityPlaceId,
-              locationCode: record.location_code || `LOC-${locationPlaceId}`,
+              locationCode: record.location || `LOC-${locationPlaceId}`,
               locationType,
               latitude: isNaN(lat) ? null : lat,
               longitude: isNaN(lon) ? null : lon,
-              locationDesc: record.location_name || null,
+              locationDesc: record.location_desc !== "NA" ? record.location_desc : null,
             },
           })
           existingLocations.add(locationPlaceId)
           results.locationsCreated++
         }
 
-        // Ensure parameter exists
-        let parameterId = existingParameters.get(record.parameter_name)
-        if (!parameterId && record.parameter_name) {
+        // Ensure parameter exists (field is "parameter" not "parameter_name")
+        const parameterName = record.parameter
+        let parameterId = existingParameters.get(parameterName)
+        if (!parameterId && parameterName) {
           const parameter = await prisma.eSMRParameter.upsert({
-            where: { parameterName: record.parameter_name },
+            where: { parameterName },
             update: {},
             create: {
-              parameterName: record.parameter_name,
-              category: record.parameter_category || null,
+              parameterName,
+              category: null, // API doesn't have separate category field
             },
           })
           parameterId = parameter.id
-          existingParameters.set(record.parameter_name, parameterId)
+          existingParameters.set(parameterName, parameterId)
           results.parametersCreated++
         }
 
@@ -247,11 +276,19 @@ export async function GET(request: NextRequest) {
         else if (q === "<" || q.includes("LESS") || q === "LT") qualifier = "LESS_THAN"
         else if (q === ">" || q.includes("GREATER") || q === "GT") qualifier = "GREATER_THAN"
 
-        // Skip if missing required fields
-        if (!record.units || !record.report_name || !record.smr_document_id) continue
+        // Skip if missing required fields (handle "NA" as missing)
+        const units = record.units && record.units !== "NA" ? record.units : null
+        if (!units || !record.report_name || !record.smr_document_id) continue
 
         const smrDocumentId = parseInt(record.smr_document_id)
         if (isNaN(smrDocumentId)) continue
+
+        // Helper to parse numeric values - handles "NaN" string from API
+        const parseNum = (val: string | undefined | null): number | null => {
+          if (!val || val === "NaN" || val === "NA") return null
+          const num = parseFloat(val)
+          return isNaN(num) ? null : num
+        }
 
         // Create sample (skip if already exists - use unique constraint)
         try {
@@ -264,14 +301,14 @@ export async function GET(request: NextRequest) {
               analysisDate: samplingDate,
               analysisTime: samplingTime,
               qualifier,
-              result: record.result ? parseFloat(record.result) : null,
-              units: record.units,
-              mdl: record.mdl ? parseFloat(record.mdl) : null,
-              ml: record.ml ? parseFloat(record.ml) : null,
-              rl: record.rl ? parseFloat(record.rl) : null,
+              result: parseNum(record.result),
+              units,
+              mdl: parseNum(record.mdl),
+              ml: parseNum(record.ml),
+              rl: parseNum(record.rl),
               reportName: record.report_name,
               smrDocumentId,
-              reviewPriorityIndicator: record.review_priority_indicator === "Y" || record.review_priority_indicator === "true",
+              reviewPriorityIndicator: record.review_priority_indicator === "Y",
             },
           })
           results.samplesCreated++

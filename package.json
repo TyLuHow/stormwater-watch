@@ -22,6 +22,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:pollutants": "tsx prisma/seed-pollutants.ts",
     "db:seed:test-data": "tsx prisma/seed-test-data.ts",
+    "db:cleanup-mock": "tsx scripts/cleanup-mock-data.ts",
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
