@@ -70,38 +70,53 @@ async function computeViolations() {
 
   console.log(`Found ${benchmarks.length} benchmarks to check\n`);
 
-  // Get all eSMR samples
-  const samples = await prisma.eSMRSample.findMany({
+  // Count total samples
+  const totalCount = await prisma.eSMRSample.count({
     where: {
       result: {
         not: null,
       },
     },
-    include: {
-      parameter: true,
-      location: {
-        include: {
-          facility: true,
-        },
-      },
-    },
   });
 
-  console.log(`Processing ${samples.length} eSMR samples...\n`);
+  console.log(`Processing ${totalCount.toLocaleString()} eSMR samples in batches...\n`);
 
   const violations: ViolationResult[] = [];
   let samplesProcessed = 0;
   let samplesWithBenchmark = 0;
 
-  for (const sample of samples) {
-    samplesProcessed++;
+  // Process in batches to avoid timeout
+  const batchSize = 10000;
+  let skip = 0;
 
-    if (samplesProcessed % 10000 === 0) {
-      console.log(`  Processed ${samplesProcessed.toLocaleString()} samples...`);
-    }
+  while (skip < totalCount) {
+    const samples = await prisma.eSMRSample.findMany({
+      where: {
+        result: {
+          not: null,
+        },
+      },
+      include: {
+        parameter: true,
+        location: {
+          include: {
+            facility: true,
+          },
+        },
+      },
+      take: batchSize,
+      skip: skip,
+    });
+
+    console.log(`Processing batch ${Math.floor(skip / batchSize) + 1}/${Math.ceil(totalCount / batchSize)} (${skip.toLocaleString()} - ${Math.min(skip + batchSize, totalCount).toLocaleString()})...`);
+
+    for (const sample of samples) {
+      samplesProcessed++;
 
     // Parse sample value
-    const sampleValue = parseFloat(sample.result!);
+    const sampleValue = typeof sample.result === 'string'
+      ? parseFloat(sample.result)
+      : parseFloat(sample.result!.toString());
     if (isNaN(sampleValue) || sampleValue < 0) {
       continue;
     }
@@ -175,6 +190,8 @@ async function computeViolations() {
         benchmarkType: matchedBenchmark.benchmarkType,
       });
     }
+
+    skip += batchSize;
   }
 
   console.log(`\n✅ Sample processing complete!`);
