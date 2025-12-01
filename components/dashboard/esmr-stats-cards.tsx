@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
 import { Database, MapPin, Beaker, Calendar, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { formatNumber } from "@/lib/utils"
 import type { StatsResponse } from "@/lib/api/esmr"
 
 interface ESMRStatsCardsProps {
@@ -11,11 +12,6 @@ interface ESMRStatsCardsProps {
 }
 
 export function ESMRStatsCards({ stats }: ESMRStatsCardsProps) {
-  // Format large numbers with commas
-  const formatNumber = (num: number): string => {
-    return num.toLocaleString()
-  }
-
   // Mission-critical card styling matching existing StatsCards
   const StatCard = ({
     label,

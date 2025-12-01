@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion"
 import { FlaskConical, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import { formatNumber } from "@/lib/utils"
 import type { ParametersByCategory } from "@/lib/api/esmr"
 
 export default function ParametersPage() {
@@ -95,7 +96,7 @@ export default function ParametersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalStats.parameters.toLocaleString()}
+                {formatNumber(totalStats.parameters)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Across {sortedCategories.length} categories
@@ -110,7 +111,7 @@ export default function ParametersPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {totalStats.samples.toLocaleString()}
+                {formatNumber(totalStats.samples)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Measurements recorded
@@ -165,7 +166,7 @@ export default function ParametersPage() {
                             </span>
                           </div>
                           <span className="text-sm font-bold">
-                            {totalSamples.toLocaleString()} samples
+                            {formatNumber(totalSamples)} samples
                           </span>
                         </div>
                       </AccordionTrigger>
@@ -190,7 +191,7 @@ export default function ParametersPage() {
                                         Samples
                                       </span>
                                       <Badge variant="secondary">
-                                        {param.sampleCount.toLocaleString()}
+                                        {formatNumber(param.sampleCount)}
                                       </Badge>
                                     </div>
                                   </CardContent>

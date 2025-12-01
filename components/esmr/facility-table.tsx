@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 import type { FacilityListResponse } from "@/lib/api/esmr"
 
 interface FacilityTableProps {
@@ -73,7 +74,7 @@ export function FacilityTable({ data, onPageChange }: FacilityTableProps) {
                   {facility.locationCount}
                 </TableCell>
                 <TableCell className="text-right">
-                  {facility.sampleCount.toLocaleString()}
+                  {formatNumber(facility.sampleCount)}
                 </TableCell>
                 <TableCell>
                   <Link href={`/esmr/facilities/${facility.facilityPlaceId}`}>
@@ -92,7 +93,7 @@ export function FacilityTable({ data, onPageChange }: FacilityTableProps) {
         <div className="text-sm text-muted-foreground">
           Showing {pagination.offset + 1}-
           {Math.min(pagination.offset + pagination.limit, pagination.total)} of{" "}
-          {pagination.total.toLocaleString()} facilities
+          {formatNumber(pagination.total)} facilities
         </div>
         <div className="flex gap-2">
           <Button

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { SampleTable } from "@/components/esmr/sample-table"
 import { Database, Filter, X, Loader2 } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 import type { SampleListResponse, FacilityListResponse, ParameterListResponse } from "@/lib/api/esmr"
 
 function SamplesPageContent() {
@@ -335,7 +336,7 @@ function SamplesPageContent() {
                 <CardTitle className="text-2xl">Sample Results</CardTitle>
                 <CardDescription className="mt-1">
                   {samples
-                    ? `${samples.pagination.total.toLocaleString()} samples found`
+                    ? `${formatNumber(samples.pagination.total)} samples found`
                     : 'Loading...'}
                 </CardDescription>
               </div>

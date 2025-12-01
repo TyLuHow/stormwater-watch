@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { FacilityTable } from "@/components/esmr/facility-table"
 import { RegionFilter } from "@/components/esmr/region-filter"
 import { Search, Building2 } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 import type { FacilityListResponse, RegionListResponse } from "@/lib/api/esmr"
 
 export default function FacilitiesPage() {
@@ -143,7 +144,7 @@ export default function FacilitiesPage() {
               <div>
                 <CardTitle className="text-2xl">Facilities</CardTitle>
                 <CardDescription className="mt-1">
-                  {facilities ? `${facilities.pagination.total.toLocaleString()} facilities found` : 'Loading...'}
+                  {facilities ? `${formatNumber(facilities.pagination.total)} facilities found` : 'Loading...'}
                 </CardDescription>
               </div>
             </div>

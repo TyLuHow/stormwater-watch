@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Download } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 import type { SampleListResponse } from "@/lib/api/esmr"
 
 interface SampleTableProps {
@@ -65,7 +66,7 @@ export function SampleTable({ data, onPageChange, onExport }: SampleTableProps) 
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="text-sm text-muted-foreground">
-          {pagination.total.toLocaleString()} total samples
+          {formatNumber(pagination.total)} total samples
         </div>
         {onExport && (
           <Button variant="outline" size="sm" onClick={onExport}>
@@ -128,7 +129,7 @@ export function SampleTable({ data, onPageChange, onExport }: SampleTableProps) 
         <div className="text-sm text-muted-foreground">
           Showing {pagination.offset + 1}-
           {Math.min(pagination.offset + pagination.limit, pagination.total)} of{" "}
-          {pagination.total.toLocaleString()} samples
+          {formatNumber(pagination.total)} samples
         </div>
         <div className="flex gap-2">
           <Button

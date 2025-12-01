@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
 import { AlertTriangle } from "lucide-react"
+import { formatNumber } from "@/lib/utils"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -263,7 +264,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
                 <div>
                   <p className="text-muted-foreground">Total Samples</p>
                   <p className="font-medium">
-                    {facility.esmrFacility.locations.reduce((sum, loc) => sum + loc.samples.length, 0).toLocaleString()}
+                    {formatNumber(facility.esmrFacility.locations.reduce((sum, loc) => sum + loc.samples.length, 0))}
                   </p>
                 </div>
               </div>

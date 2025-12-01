@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import { ArrowLeft, Building2, MapPin, Droplets, Calendar, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import { formatNumber } from "@/lib/utils"
 import type { FacilityDetailResponse, SampleListResponse } from "@/lib/api/esmr"
 
 export default function FacilityDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -196,7 +197,7 @@ export default function FacilityDetailPage({ params }: { params: Promise<{ id: s
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {facility.stats.totalSamples.toLocaleString()}
+                {formatNumber(facility.stats.totalSamples)}
               </div>
             </CardContent>
           </Card>
@@ -263,7 +264,7 @@ export default function FacilityDetailPage({ params }: { params: Promise<{ id: s
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm text-muted-foreground">
-                      {location.sampleCount.toLocaleString()} samples
+                      {formatNumber(location.sampleCount)} samples
                     </div>
                     {location.locationDesc && (
                       <div className="text-xs text-muted-foreground mt-1">
