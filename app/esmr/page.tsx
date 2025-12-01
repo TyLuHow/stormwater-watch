@@ -4,6 +4,7 @@ import { StatsOverview } from "@/components/esmr/stats-overview"
 import { ArrowRight, Building2, FlaskConical, Database } from "lucide-react"
 import Link from "next/link"
 import type { StatsResponse, RegionListResponse } from "@/lib/api/esmr"
+import { formatNumber } from "@/lib/utils"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -66,7 +67,7 @@ export default async function ESMRDashboardPage() {
               <span className="text-gradient">Monitoring</span>
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl">
-              Explore {stats.totals.samples.toLocaleString()}+ water quality samples from California facilities.
+              Explore {formatNumber(stats.totals.samples)}+ water quality samples from California facilities.
               Real-time access to electronic Self-Monitoring Reports (eSMR) data.
             </p>
           </div>
@@ -94,7 +95,7 @@ export default async function ESMRDashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                View {stats.totals.facilities.toLocaleString()} facilities across California water board regions with detailed monitoring data.
+                View {formatNumber(stats.totals.facilities)} facilities across California water board regions with detailed monitoring data.
               </p>
               <Link href="/esmr/facilities">
                 <Button className="w-full">
@@ -119,7 +120,7 @@ export default async function ESMRDashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Explore {stats.totals.parameters.toLocaleString()} different water quality parameters including metals, nutrients, and more.
+                Explore {formatNumber(stats.totals.parameters)} different water quality parameters including metals, nutrients, and more.
               </p>
               <Link href="/esmr/parameters">
                 <Button className="w-full">
@@ -144,7 +145,7 @@ export default async function ESMRDashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Search and filter through {stats.totals.samples.toLocaleString()} samples with advanced filtering and export options.
+                Search and filter through {formatNumber(stats.totals.samples)} samples with advanced filtering and export options.
               </p>
               <Link href="/esmr/samples">
                 <Button className="w-full">
@@ -196,7 +197,7 @@ export default async function ESMRDashboardPage() {
                             />
                           </div>
                           <span className="text-lg font-bold w-20 text-right">
-                            {region.sampleCount.toLocaleString()}
+                            {formatNumber(region.sampleCount)}
                           </span>
                         </div>
                       </div>
@@ -241,7 +242,7 @@ export default async function ESMRDashboardPage() {
                           />
                         </div>
                         <span className="text-lg font-bold w-20 text-right">
-                          {param.sampleCount.toLocaleString()}
+                          {formatNumber(param.sampleCount)}
                         </span>
                       </div>
                     </div>

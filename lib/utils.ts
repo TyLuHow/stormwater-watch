@@ -50,3 +50,9 @@ export function haversineDistance(point1: { lat: number; lon: number }, point2: 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
   return R * c
 }
+
+// Format numbers consistently for hydration (server/client match)
+// Uses explicit 'en-US' locale to prevent hydration mismatches
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat('en-US').format(value)
+}

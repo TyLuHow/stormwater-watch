@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Database, MapPin, FlaskConical, Droplets, Calendar } from "lucide-react"
 import type { StatsResponse } from "@/lib/api/esmr"
+import { formatNumber } from "@/lib/utils"
 
 interface StatsOverviewProps {
   stats: StatsResponse
@@ -16,10 +17,10 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stats.totals.samples.toLocaleString()}
+            {formatNumber(stats.totals.samples)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            {stats.recentActivity.samplesLast30Days.toLocaleString()} in last 30 days
+            {formatNumber(stats.recentActivity.samplesLast30Days)} in last 30 days
           </p>
         </CardContent>
       </Card>
@@ -31,7 +32,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stats.totals.facilities.toLocaleString()}
+            {formatNumber(stats.totals.facilities)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Across {stats.totals.regions} regions
@@ -46,7 +47,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stats.totals.locations.toLocaleString()}
+            {formatNumber(stats.totals.locations)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Monitoring points
@@ -61,7 +62,7 @@ export function StatsOverview({ stats }: StatsOverviewProps) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {stats.totals.parameters.toLocaleString()}
+            {formatNumber(stats.totals.parameters)}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Measured types
