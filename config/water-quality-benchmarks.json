@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "lastUpdated": "2025-12-01",
+  "description": "Comprehensive water quality benchmark values from multiple regulatory and health-based sources",
+  "sources": [
+    {
+      "id": "ca-igp",
+      "name": "California Industrial General Permit",
+      "authority": "California State Water Resources Control Board",
+      "document": "Order 2014-0057-DWQ (amended by Orders 2015-0122-DWQ and 2018-0028-DWQ)",
+      "url": "https://www.waterboards.ca.gov/water_issues/programs/stormwater/industrial.html",
+      "type": "regulatory",
+      "jurisdiction": "California",
+      "applicability": "Industrial stormwater discharges"
+    },
+    {
+      "id": "epa-npdwr",
+      "name": "EPA National Primary Drinking Water Regulations",
+      "authority": "U.S. Environmental Protection Agency",
+      "document": "Safe Drinking Water Act (SDWA)",
+      "url": "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations",
+      "type": "regulatory",
+      "jurisdiction": "Federal (US)",
+      "applicability": "Public drinking water systems"
+    },
+    {
+      "id": "epa-aquatic",
+      "name": "EPA Aquatic Life Criteria",
+      "authority": "U.S. Environmental Protection Agency",
+      "document": "National Recommended Water Quality Criteria",
+      "url": "https://www.epa.gov/wqc/national-recommended-water-quality-criteria-aquatic-life-criteria-table",
+      "type": "health-based",
+      "jurisdiction": "Federal (US)",
+      "applicability": "Surface water - protection of aquatic life"
+    }
+  ],
+  "benchmarkTypes": {
+    "ANNUAL_NAL": {
+      "name": "Annual Numeric Action Level",
+      "description": "Average of all analytical results for a parameter from samples taken within a reporting year",
+      "source": "ca-igp",
+      "timeframe": "annual"
+    },
+    "INSTANT_NAL": {
+      "name": "Instantaneous Maximum NAL",
+      "description": "Single sample result maximum threshold",
+      "source": "ca-igp",
+      "timeframe": "instantaneous"
+    },
+    "MCL": {
+      "name": "Maximum Contaminant Level",
+      "description": "Highest level of a contaminant allowed in drinking water; enforceable standard",
+      "source": "epa-npdwr",
+      "timeframe": "ongoing"
+    },
+    "ACTION_LEVEL": {
+      "name": "Action Level",
+      "description": "Concentration that triggers treatment or other requirements; not an MCL",
+      "source": "epa-npdwr",
+      "timeframe": "ongoing"
+    },
+    "CMC": {
+      "name": "Criteria Maximum Concentration",
+      "description": "Acute aquatic life criterion (1-hour average concentration)",
+      "source": "epa-aquatic",
+      "timeframe": "1-hour"
+    },
+    "CCC": {
+      "name": "Criterion Continuous Concentration",
+      "description": "Chronic aquatic life criterion (4-day average concentration)",
+      "source": "epa-aquatic",
+      "timeframe": "4-day"
+    },
+    "SECONDARY_MCL": {
+      "name": "Secondary Maximum Contaminant Level",
+      "description": "Non-enforceable guideline for contaminants that may affect aesthetic quality",
+      "source": "epa-npdwr",
+      "timeframe": "ongoing"
+    },
+    "HEALTH_ADVISORY": {
+      "name": "Health Advisory Level",
+      "description": "Non-regulatory guidance value for contaminants without MCLs",
+      "source": "epa-npdwr",
+      "timeframe": "ongoing"
+    }
+  },
+  "waterTypes": {
+    "ALL": "Applies to all water types",
+    "FRESHWATER": "Freshwater bodies (rivers, lakes, streams)",
+    "SALTWATER": "Marine and estuarine waters",
+    "DRINKING": "Potable water for human consumption"
+  },
+  "parameterCategories": {
+    "METALS_HEAVY": {
+      "name": "Heavy Metals",
+      "description": "Toxic metals with high atomic weight (lead, mercury, arsenic, cadmium)",
+      "healthConcerns": "Neurotoxicity, carcinogenicity, bioaccumulation"
+    },
+    "METALS_TRACE": {
+      "name": "Trace Metals",
+      "description": "Metals present in small amounts (copper, zinc, iron, aluminum, nickel)",
+      "healthConcerns": "Essential nutrients at low levels; toxic at elevated concentrations"
+    },
+    "NUTRIENTS": {
+      "name": "Nutrients",
+      "description": "Nitrogen and phosphorus compounds",
+      "healthConcerns": "Eutrophication, algal blooms, hypoxia"
+    },
+    "CONVENTIONAL": {
+      "name": "Conventional Pollutants",
+      "description": "Common water quality parameters (TSS, BOD, COD, pH, turbidity)",
+      "healthConcerns": "Water clarity, oxygen depletion, habitat degradation"
+    },
+    "ORGANICS_VOC": {
+      "name": "Volatile Organic Compounds",
+      "description": "Organic chemicals that easily evaporate (benzene, toluene, xylene)",
+      "healthConcerns": "Carcinogenicity, liver/kidney damage"
+    },
+    "ORGANICS_SVOC": {
+      "name": "Semivolatile Organic Compounds",
+      "description": "PAHs, phenols, phthalates",
+      "healthConcerns": "Carcinogenicity, endocrine disruption"
+    },
+    "PESTICIDES": {
+      "name": "Pesticides",
+      "description": "Herbicides, insecticides, fungicides",
+      "healthConcerns": "Neurotoxicity, carcinogenicity, endocrine disruption"
+    },
+    "PCBS": {
+      "name": "Polychlorinated Biphenyls",
+      "description": "Persistent organic pollutants",
+      "healthConcerns": "Carcinogenicity, bioaccumulation"
+    },
+    "PATHOGENS": {
+      "name": "Pathogens",
+      "description": "Disease-causing microorganisms",
+      "healthConcerns": "Waterborne illness"
+    },
+    "PHYSICAL": {
+      "name": "Physical Parameters",
+      "description": "pH, temperature, conductivity, color, odor",
+      "healthConcerns": "Water quality indicators"
+    },
+    "RADIOLOGICAL": {
+      "name": "Radiological Contaminants",
+      "description": "Radioactive substances (radium, uranium)",
+      "healthConcerns": "Cancer risk from radiation exposure"
+    },
+    "PFAS": {
+      "name": "Per- and Polyfluoroalkyl Substances",
+      "description": "Forever chemicals (PFOA, PFOS, GenX)",
+      "healthConcerns": "Persistence, bioaccumulation, immune system effects"
+    },
+    "OTHER": {
+      "name": "Other Parameters",
+      "description": "Parameters not classified in standard categories",
+      "healthConcerns": "Varies by substance"
+    }
+  },
+  "hardnessDependentMetals": {
+    "description": "Metals whose toxicity varies with water hardness (calcium and magnesium concentration)",
+    "rationale": "Higher water hardness reduces the bioavailability and toxicity of certain metals to aquatic organisms",
+    "referenceHardness": "100 mg/L as CaCO3",
+    "metals": [
+      "CADMIUM",
+      "CHROMIUM",
+      "COPPER",
+      "LEAD",
+      "NICKEL",
+      "SILVER",
+      "ZINC"
+    ],
+    "equationFormat": "exp(m * ln(hardness) + b) * CF",
+    "coefficients": {
+      "CADMIUM": {
+        "CMC": {
+          "m": 0.9789,
+          "b": -3.866,
+          "CF": "1.136672 - (ln(hardness) * 0.041838)"
+        }
+      },
+      "CHROMIUM": {
+        "CMC": {
+          "m": 0.819,
+          "b": 3.7256,
+          "CF": 0.316
+        },
+        "CCC": {
+          "m": 0.819,
+          "b": 0.6848,
+          "CF": 0.86
+        }
+      },
+      "LEAD": {
+        "CMC": {
+          "m": 1.273,
+          "b": -1.46,
+          "CF": "1.46203 - (ln(hardness) * 0.145712)"
+        },
+        "CCC": {
+          "m": 1.273,
+          "b": -4.705,
+          "CF": "1.46203 - (ln(hardness) * 0.145712)"
+        }
+      },
+      "NICKEL": {
+        "CMC": {
+          "m": 0.846,
+          "b": 2.255,
+          "CF": 0.998
+        },
+        "CCC": {
+          "m": 0.846,
+          "b": 0.0584,
+          "CF": 0.997
+        }
+      },
+      "SILVER": {
+        "CMC": {
+          "m": 1.72,
+          "b": -6.59,
+          "CF": 0.85
+        }
+      },
+      "ZINC": {
+        "CMC": {
+          "m": 0.8473,
+          "b": 0.884,
+          "CF": 0.978
+        },
+        "CCC": {
+          "m": 0.8473,
+          "b": 0.884,
+          "CF": 0.986
+        }
+      }
+    }
+  },
+  "usageNotes": {
+    "violationDetection": "Compare sample results against applicable benchmarks based on water type and exposure timeframe",
+    "multipleThresholds": "A single pollutant may have multiple applicable benchmarks (e.g., COPPER has IGP NAL, MCL Action Level, and aquatic CMC/CCC)",
+    "hardnessAdjustment": "For hardness-dependent metals, calculate site-specific criteria using measured water hardness",
+    "unitConversion": "Ensure sample results and benchmark units are consistent before comparison (mg/L vs µg/L)",
+    "levelStatus": "California IGP facilities are assigned Level 1, 2, or 3 status based on NAL exceedances",
+    "pfasUpdates": "EPA PFAS regulations finalized April 2024, with May 2025 updates pending; monitor for changes",
+    "cadmiumNote": "2016 chronic freshwater cadmium criterion was vacated in August 2023; use 2001 criterion"
+  },
+  "futureEnhancements": [
+    "Sector-specific NALs by SIC code from California IGP Table 1",
+    "TMDL-based action levels for impaired water bodies",
+    "Additional EPA drinking water contaminants (60+ more compounds)",
+    "State-specific criteria (e.g., California CTR, Basin Plan objectives)",
+    "Sediment quality guidelines",
+    "Tissue residue criteria"
+  ]
+}

@@ -1,0 +1,329 @@
+eSMR Parameter Mapping Summary
+================================================================================
+
+
+METALS_HEAVY (64)
+--------------------------------------------------------------------------------
+  Alkalinity, Bicarbonate (as CaCO3) → ARSENIC
+  Alkalinity, Carbonate (as CaCO3) → ARSENIC
+  Alkalinity, Hydroxide (as CaCO3) → ARSENIC
+  Alkalinity, Total (as CaCO3) → ARSENIC
+  Ammonia, Total (as N) → ARSENIC
+  Ammonia, Unionized (as N) → ARSENIC
+  Ammonium as Nitrogen → ARSENIC
+  Arsenic, Dissolved → ARSENIC
+  Arsenic, Total → ARSENIC
+  Arsenic, Total Recoverable → ARSENIC
+  Bicarbonate as CaCO3 → ARSENIC
+  Bicarbonate Ion (as HCO3) → ARSENIC
+  Cadmium, Dissolved → CADMIUM
+  Cadmium, Total → CADMIUM
+  Cadmium, Total Recoverable → CADMIUM
+  Carbonate as CaCO3 → ARSENIC
+  Carbonate Ion (as CO3) → ARSENIC
+  Chromium (III) → CHROMIUM
+  Chromium (III) Dissolved → CHROMIUM
+  Chromium (III) Total Recoverable → CHROMIUM
+  Chromium (Total) → CHROMIUM
+  Chromium (VI) → CHROMIUM
+  Chromium (VI) Dissolved → CHROMIUM
+  Chromium (VI) Total Recoverable → CHROMIUM
+  Chromium, Dissolved → CHROMIUM
+  Chromium, Total Recoverable → CHROMIUM
+  Cyanide, Total (as CN) → ARSENIC
+  Hardness, Ca (as CaCO3) → ARSENIC
+  Hardness, Dissolved (as CaCO3) → ARSENIC
+  Hardness, Mg (as CaCO3) → ARSENIC
+  Hardness, Total (as CaCO3) → ARSENIC
+  Indeno (1,2,3-cd) Pyrene → CADMIUM
+  Lead, Dissolved → LEAD
+  Lead, Total → LEAD
+  Lead, Total Recoverable → LEAD
+  Mercury, Dissolved → MERCURY
+  Mercury, Total → MERCURY
+  Mercury, Total Recoverable → MERCURY
+  Methyl Mercury → MERCURY
+  Nitrate, Total (as N) → NITRATE
+  Nitrate, Total (as NO3) → NITRATE
+  Nitrite Plus Nitrate (as N) → NITRATE
+  Nitrite, Total (as N) → ARSENIC
+  Nitrite, Total (as NO2) → ARSENIC
+  Nitrogen, Total (as N) → ARSENIC
+  Nitrogen, Total Inorganic (as N) → ARSENIC
+  Nitrogen, Total Organic (as N) → ARSENIC
+  Orthophosphate, Dissolved (as P) → PHOSPHORUS
+  Orthophosphate, Total (as P) → PHOSPHORUS
+  Phosphate, Total (as P) → ARSENIC
+  ... and 14 more
+
+METALS_TRACE (29)
+--------------------------------------------------------------------------------
+  Acid-Soluble Aluminum → ALUMINUM
+  Aluminum, Dissolved → ALUMINUM
+  Aluminum, Filtered → ALUMINUM
+  Aluminum, Total → ALUMINUM
+  Aluminum, Total Recoverable → ALUMINUM
+  Copper, Dissolved → COPPER
+  Copper, Filtered → COPPER
+  Copper, Total → COPPER
+  Copper, Total Recoverable → COPPER
+  Iron, Dissolved → IRON
+  Iron, Filtered → IRON
+  Iron, Total → IRON
+  Iron, Total Recoverable → IRON
+  Manganese, Dissolved
+  Manganese, Filtered
+  Manganese, Total
+  Manganese, Total Recoverable
+  Nickel Impact Ratio → NICKEL
+  Nickel, Dissolved → NICKEL
+  Nickel, Total → NICKEL
+  Nickel, Total Recoverable → NICKEL
+  Silver, Dissolved
+  Silver, Total
+  Silver, Total Recoverable
+  Zinc Impact Ratio → ZINC
+  Zinc, Dissolved → ZINC
+  Zinc, Filtered → ZINC
+  Zinc, Total → ZINC
+  Zinc, Total Recoverable → ZINC
+
+NUTRIENTS (1)
+--------------------------------------------------------------------------------
+  Ammonia Impact Ratio
+
+CONVENTIONAL (13)
+--------------------------------------------------------------------------------
+  Biochemical Oxygen Demand (BOD) (5-day @ 20 Deg. C) → COD
+  Chemical Oxygen Demand (COD) → COD
+  Diesel Oil
+  Fixed Dissolved Solids (FDS)
+  Motor Oil
+  Oil and Grease → O&G
+  Soluble Chemical Oxygen Demand → COD
+  Total Dissolved Solids (TDS)
+  Total Suspended Solids (TSS) → TSS
+  Total Suspended Solids (TSS), Net Value → TSS
+  Total Suspended Solids (TSS), Percent Removal → TSS
+  Turbidity
+  Volatile Suspended Solids (VSS) → TSS
+
+ORGANICS_VOC (17)
+--------------------------------------------------------------------------------
+  1,1-Dichloroethane
+  1,1,1-Trichloroethane
+  1,1,2-Trichloroethane
+  1,2-Dichloroethane
+  1,2-Dichloroethane-d4
+  Benzene
+  Carbon Tetrachloride
+  Chloroform
+  Ethylbenzene
+  Methylene Chloride
+  o-Xylene
+  Styrene
+  Tetrachloro-m-xylene
+  Toluene
+  Toluene-d8
+  Total Volatile Solids
+  Vinyl Chloride
+
+ORGANICS_SVOC (20)
+--------------------------------------------------------------------------------
+  Anthracene
+  Benzo(a)anthracene
+  Benzo(a)pyrene
+  Benzo(b)fluoranthene
+  Benzo(e)pyrene
+  Benzo(ghi)perylene
+  Benzo(k)fluoranthene
+  Bis (2-Ethylhexyl) Phthalate
+  Butylbenzyl Phthalate
+  Di-n-butyl Phthalate
+  Di-n-octyl Phthalate
+  Dibenzo(a,h)anthracene
+  Diethyl Phthalate
+  Dimethyl Phthalate
+  Naphthalene
+  Phenanthrene
+  Phenol-d5
+  Phenol, Single Compound
+  Phthalate Esters
+  Pyrene
+
+PESTICIDES (24)
+--------------------------------------------------------------------------------
+  2,4-D
+  2,4-DDT
+  2,4,5-TP (Silvex) → PHOSPHORUS
+  4,4-DDT
+  Aldrin
+  alpha-Chlordane
+  Atrazine
+  Carbaryl
+  Chlordane
+  Chlorpyrifos
+  DDT/DDD/DDE, Sum of P,P & O,P Isomers
+  Diazinon
+  Dieldrin
+  Endrin
+  Endrin Aldehyde
+  Endrin ketone
+  gamma-Chlordane
+  Glyphosate, Total
+  Heptachlor
+  Heptachlor Epoxide
+  Malathion
+  Parathion
+  Simazine
+  Toxaphene
+
+PCBS (268)
+--------------------------------------------------------------------------------
+  PCB 001
+  PCB 002
+  PCB 003
+  PCB 004
+  PCB 005
+  PCB 005/008
+  PCB 006
+  PCB 007
+  PCB 008
+  PCB 009
+  PCB 010
+  PCB 011
+  PCB 012
+  PCB 012/013
+  PCB 013
+  PCB 014
+  PCB 015
+  PCB 016
+  PCB 017
+  PCB 018
+  PCB 018/030
+  PCB 019
+  PCB 020
+  PCB 020/021/033
+  PCB 020/028
+  PCB 021
+  PCB 021/033
+  PCB 022
+  PCB 023
+  PCB 024
+  PCB 025
+  PCB 026
+  PCB 026/029
+  PCB 027
+  PCB 028
+  PCB 029
+  PCB 030
+  PCB 031
+  PCB 032
+  PCB 033
+  PCB 034
+  PCB 035
+  PCB 036
+  PCB 037
+  PCB 038
+  PCB 039
+  PCB 040
+  PCB 040/071
+  PCB 041
+  PCB 042
+  ... and 218 more
+
+PATHOGENS (3)
+--------------------------------------------------------------------------------
+  E.coli
+  Fecal Coliform
+  Total Coliform
+
+PHYSICAL (17)
+--------------------------------------------------------------------------------
+  Chlorine Usage
+  Chlorine, Free Available
+  Chlorine, Total Residual
+  Color, ADMI
+  Color, Pt-Co (filtered)
+  Color, Pt-Co (unfiltered)
+  CT (Cl residual * contact time)
+  Dissolved Oxygen
+  Dissolved Oxygen, saturation
+  Electrical Conductivity @ 25 Deg. C
+  Flow
+  Odor
+  pH → PH
+  Receiving Water to Effluent Flow Ratio
+  Salinity
+  Temp Diff b/n Intake and Discharge
+  Temperature
+
+RADIOLOGICAL (8)
+--------------------------------------------------------------------------------
+  alpha-BHC
+  beta-BHC
+  Radiation, Gross Alpha
+  Radiation, Gross Beta
+  Radium-226
+  Radium-226 + Radium-228
+  Radium-228
+  Uranium
+
+PFAS (2)
+--------------------------------------------------------------------------------
+  Perfluoro-2-propoxypropanoic acid (PFPrOPrA)(GenX) (HFPO-DA)
+  Total PFOA and PFOS
+
+OTHER (433)
+--------------------------------------------------------------------------------
+  1-Methylnaphthalene
+  1-Methylphenanthrene
+  1,1-Dichloroethylene
+  1,1-Dichloropropene
+  1,1,1,2-Tetrachloroethane
+  1,1,2-Trichloro-1,2,2-Trifluoroethane
+  1,1,2,2-Tetrachloroethane
+  1,2-Dibromo-3-Chloropropane
+  1,2-Dibromoethane
+  1,2-Dichloro-1,1,2-trifluoroethane
+  1,2-Dichlorobenzene
+  1,2-Dichloroethylenes, Sum
+  1,2-Dichloropropane
+  1,2-Diphenylhydrazine
+  1,2,3-Trichlorobenzene
+  1,2,3-Trichloropropane
+  1,2,3,4,6,7,8-Heptachlorodibenzo-p-dioxin
+  1,2,3,4,6,7,8-Heptachlorodibenzofuran
+  1,2,3,4,6,7,8,9-Octachlorodibenzo-p-dioxin
+  1,2,3,4,6,7,8,9-Octachlorodibenzofuran
+  1,2,3,4,7,8-Hexachlorodibenzo-p-dioxin
+  1,2,3,4,7,8-Hexachlorodibenzofuran
+  1,2,3,4,7,8,9-Heptachlorodibenzofuran
+  1,2,3,6,7,8-Hexachlorodibenzo-p-dioxin
+  1,2,3,6,7,8-Hexachlorodibenzofuran
+  1,2,3,7,8-Pentachlorodibenzo-p-dioxin
+  1,2,3,7,8-Pentachlorodibenzofuran
+  1,2,3,7,8,9-Hexachlorodibenzo-p-dioxin
+  1,2,3,7,8,9-Hexachlorodibenzofuran
+  1,2,4-Trichlorobenzene
+  1,2,4-Trimethylbenzene
+  1,3-Dichlorobenzene
+  1,3-Dichloropropane
+  1,3-Dichloropropylenes, Sum
+  1,3-Dinitrobenzene
+  1,3,5-Trimethylbenzene
+  1,4-Dichlorobenzene
+  10:2 Fluorotelomer sulfonic acid
+  11-Chloroeicosafluoro-3-oxaundecane-1-sulfonic acid
+  2-Chloroethylvinyl Ether
+  2-Chloronaphthalene
+  2-Chlorophenol
+  2-Chlorotoluene
+  2-Fluorobiphenyl
+  2-Fluorophenol
+  2-Hexanone
+  2-Methylnaphthalene
+  2-Methylphenol
+  2-Nitroaniline
+  2-Nitrophenol
+  ... and 383 more
