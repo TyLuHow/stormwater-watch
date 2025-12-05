@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { BackButton } from '@/components/ui/back-button';
 import { toast } from 'sonner';
 import { Search, Link as LinkIcon, Unlink, ExternalLink } from 'lucide-react';
 
@@ -144,7 +145,8 @@ export default function FacilityLinkingPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Facility Linking Administration</h1>
+        <BackButton href="/dashboard" label="Back to Dashboard" />
+        <h1 className="text-3xl font-bold mt-4">Facility Linking Administration</h1>
         <p className="text-muted-foreground mt-2">
           Link existing Facility records to eSMR monitoring data
         </p>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { BackButton } from "@/components/ui/back-button"
 import { toast } from "@/hooks/use-toast"
 import { Upload, AlertCircle } from "lucide-react"
 
@@ -56,7 +57,8 @@ export default function IngestPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Data Ingestion</h1>
+        <BackButton href="/dashboard" label="Back to Dashboard" />
+        <h1 className="text-3xl font-bold mt-4">Data Ingestion</h1>
         <p className="text-muted-foreground mt-2">Upload CIWQS/SMARTS CSV files</p>
       </div>
 

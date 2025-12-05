@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { BackButton } from "@/components/ui/back-button"
 import { AlertCircle, CheckCircle2, XCircle, RefreshCw } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 
@@ -79,6 +80,9 @@ export default function SetupPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
+      <div>
+        <BackButton href="/dashboard" label="Back to Dashboard" />
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Stormwater Watch Setup</h1>

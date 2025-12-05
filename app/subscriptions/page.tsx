@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CreateSubscriptionForm } from "@/components/subscriptions/create-form"
 import { SubscriptionsList } from "@/components/subscriptions/list"
+import { BackButton } from "@/components/ui/back-button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 // Force dynamic rendering to prevent database access during build
@@ -49,7 +50,8 @@ export default async function SubscriptionsPage() {
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Subscriptions</h1>
+        <BackButton href="/dashboard" label="Back to Dashboard" />
+        <h1 className="text-3xl font-bold mt-4">Subscriptions</h1>
         <p className="text-muted-foreground mt-2">Manage your alert rules and monitoring areas</p>
       </div>
 

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { SampleChart } from "@/components/facilities/sample-chart"
 import { CasePacketButton } from "@/components/facilities/case-packet-button"
+import { BackButton } from "@/components/ui/back-button"
 import { AlertTriangle } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
 
@@ -138,7 +139,8 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{facility.name}</h1>
+        <BackButton href="/dashboard" label="Back to Dashboard" />
+        <h1 className="text-3xl font-bold mt-4">{facility.name}</h1>
         <p className="text-muted-foreground mt-2">{facility.county} County</p>
       </div>
 
