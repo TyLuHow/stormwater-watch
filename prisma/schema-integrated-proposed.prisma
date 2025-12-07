@@ -1,0 +1,990 @@
+// This is the proposed integrated schema combining eSMR (existing) + SMARTS (new)
+// Generated: December 6, 2025
+// Based on: research/data-schema-integration-analysis.md
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =============================================================================
+// EXISTING MODELS (Keep as-is, already deployed)
+// =============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(PARTNER)
+  createdAt DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+enum Role {
+  ADMIN
+  PARTNER
+}
+
+model Facility {
+  id             String    @id @default(cuid())
+  name           String
+  permitId       String    @unique
+  naics          String?
+  lat            Decimal   @db.Decimal(9, 6)
+  lon            Decimal   @db.Decimal(9, 6)
+  county         String?
+  watershedHuc12 String?
+  ms4            String?
+  receivingWater String?
+  isInDAC        Boolean   @default(false)
+  enrichedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @default(now())
+
+  // === EXTENDED: Links to eSMR or SMARTS or both ===
+  esmrFacilityId Int?
+  esmrFacility   ESMRFacility?      @relation(fields: [esmrFacilityId], references: [facilityPlaceId])
+  smartsWdid     String?            // SMARTS Waste Discharger ID
+  smartsAppId    String?            // SMARTS Application ID
+  smartsFacility SMARTSFacility?    @relation(fields: [smartsWdid, smartsAppId], references: [wdid, appId])
+  // === END EXTENDED ===
+
+  samples          Sample[]
+  violationEvents  ViolationEvent[]
+  violationSamples ViolationSample[]
+  alerts           Alert[]
+
+  @@index([county])
+  @@index([watershedHuc12])
+  @@index([ms4])
+  @@index([isInDAC])
+  @@index([esmrFacilityId])
+  @@index([smartsWdid, smartsAppId])
+}
+
+model Sample {
+  id              String   @id @default(cuid())
+  facilityId      String
+  facility        Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  sampleDate      DateTime @db.Date
+  pollutant       String
+  value           Decimal  @db.Decimal(12, 4)
+  unit            String
+  benchmark       Decimal  @db.Decimal(12, 4)
+  benchmarkUnit   String
+  exceedanceRatio Decimal? @db.Decimal(8, 2)
+  reportingYear   String
+  source          String
+  sourceDocUrl    String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([facilityId, pollutant, sampleDate])
+  @@index([reportingYear])
+  @@index([exceedanceRatio])
+  @@index([facilityId])
+  @@index([pollutant])
+  @@index([sampleDate])
+}
+
+model ViolationEvent {
+  id            String            @id @default(cuid())
+  facilityId    String
+  facility      Facility          @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  pollutantKey  String
+  pollutant     ConfigPollutant   @relation(fields: [pollutantKey], references: [key])
+  firstDate     DateTime          @db.Date
+  lastDate      DateTime          @db.Date
+  count         Int
+  maxRatio      Decimal           @db.Decimal(8, 2)
+  maxSeverity   ViolationSeverity @default(MODERATE)
+  reportingYear String
+  impairedWater Boolean           @default(false)
+  dismissed     Boolean           @default(false)
+  notes         String?           @db.Text
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  alerts  Alert[]
+  samples ViolationSample[]
+
+  @@unique([facilityId, pollutantKey, reportingYear])
+  @@index([facilityId, pollutantKey, reportingYear])
+  @@index([dismissed])
+  @@index([facilityId])
+  @@index([pollutantKey])
+  @@index([reportingYear])
+  @@index([maxRatio])
+  @@index([maxSeverity])
+}
+
+model ViolationSample {
+  id String @id @default(cuid())
+
+  violationEventId String
+  violationEvent   ViolationEvent @relation(fields: [violationEventId], references: [id], onDelete: Cascade)
+
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  esmrSampleId String
+  esmrSample   ESMRSample @relation(fields: [esmrSampleId], references: [id], onDelete: Cascade)
+
+  benchmarkId String
+  benchmark   PollutantBenchmark @relation(fields: [benchmarkId], references: [id])
+
+  pollutantKey String
+
+  detectedAt      DateTime          @db.Date
+  measuredValue   Decimal           @db.Decimal(18, 6)
+  measuredUnit    String            @db.VarChar(50)
+  benchmarkValue  Decimal           @db.Decimal(18, 6)
+  benchmarkUnit   String            @db.VarChar(50)
+  exceedanceRatio Decimal           @db.Decimal(8, 2)
+  severity        ViolationSeverity
+
+  status      ViolationStatus @default(OPEN)
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  reviewNotes String?         @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([esmrSampleId, benchmarkId])
+  @@index([violationEventId])
+  @@index([facilityId])
+  @@index([esmrSampleId])
+  @@index([benchmarkId])
+  @@index([pollutantKey])
+  @@index([detectedAt])
+  @@index([status])
+  @@index([severity])
+  @@index([facilityId, pollutantKey, detectedAt])
+  @@index([status, severity])
+  @@map("violation_samples")
+}
+
+enum ViolationStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+
+  @@map("violation_status")
+}
+
+enum ViolationSeverity {
+  LOW
+  MODERATE
+  HIGH
+  CRITICAL
+
+  @@map("violation_severity")
+}
+
+model Subscription {
+  id                      String           @id @default(cuid())
+  userId                  String
+  user                    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                    String
+  mode                    SubscriptionMode
+  params                  Json
+  minRatio                Decimal          @default(1.0) @db.Decimal(4, 2)
+  repeatOffenderThreshold Int              @default(2)
+  impairedOnly            Boolean          @default(false)
+  schedule                Schedule
+  delivery                Delivery         @default(EMAIL)
+  active                  Boolean          @default(true)
+  lastRunAt               DateTime?
+  createdAt               DateTime         @default(now())
+  alerts                  Alert[]
+
+  @@index([active, schedule])
+}
+
+enum SubscriptionMode {
+  POLYGON
+  BUFFER
+  JURISDICTION
+}
+
+enum Schedule {
+  DAILY
+  WEEKLY
+}
+
+enum Delivery {
+  EMAIL
+  SLACK
+  BOTH
+}
+
+model Alert {
+  id               String          @id @default(cuid())
+  subscriptionId   String
+  subscription     Subscription    @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  facilityId       String
+  facility         Facility        @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  violationEventId String?
+  violationEvent   ViolationEvent? @relation(fields: [violationEventId], references: [id], onDelete: Cascade)
+  sentAt           DateTime        @default(now())
+  payload          Json
+
+  @@index([sentAt])
+  @@index([subscriptionId])
+  @@index([facilityId])
+  @@index([violationEventId])
+}
+
+model Provenance {
+  id        String   @id @default(cuid())
+  source    String
+  url       String?
+  fileKey   String?
+  checksum  String?
+  fetchedAt DateTime @default(now())
+  notes     String?
+}
+
+model ConfigPollutant {
+  key           String   @id
+  aliases       String[]
+  canonicalUnit String
+  category      String?  @db.VarChar(100)
+  notes         String?  @db.Text
+
+  benchmarks      PollutantBenchmark[]
+  violationEvents ViolationEvent[]
+
+  @@index([category])
+}
+
+model PollutantBenchmark {
+  id String @id @default(cuid())
+
+  pollutantKey String
+  pollutant    ConfigPollutant @relation(fields: [pollutantKey], references: [key], onDelete: Cascade)
+
+  benchmarkType BenchmarkType
+  waterType     WaterType     @default(ALL)
+
+  value    Decimal  @db.Decimal(12, 6)
+  valueMax Decimal? @db.Decimal(12, 6)
+  unit     String   @db.VarChar(20)
+
+  source         String  @db.VarChar(200)
+  sourceDocument String? @db.Text
+  sourceUrl      String? @db.Text
+
+  hardnessDependent Boolean @default(false)
+  hardnessEquation  String? @db.Text
+
+  notes String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  violationSamples ViolationSample[]
+
+  @@unique([pollutantKey, benchmarkType, waterType])
+  @@index([pollutantKey])
+  @@index([benchmarkType])
+  @@index([waterType])
+  @@map("pollutant_benchmarks")
+}
+
+enum BenchmarkType {
+  ANNUAL_NAL
+  INSTANT_NAL
+  MCL
+  ACTION_LEVEL
+  CMC
+  CCC
+  SECONDARY_MCL
+  HEALTH_ADVISORY
+}
+
+enum WaterType {
+  FRESHWATER
+  SALTWATER
+  DRINKING
+  ALL
+}
+
+// =============================================================================
+// eSMR (Electronic Self-Monitoring Report) Models - EXISTING
+// =============================================================================
+
+model ESMRRegion {
+  code String @id @db.VarChar(10)
+  name String @unique @db.VarChar(100)
+
+  facilities ESMRFacility[]
+
+  @@map("esmr_regions")
+}
+
+model ESMRFacility {
+  facilityPlaceId Int        @id
+  facilityName    String     @db.VarChar(200)
+  regionCode      String     @db.VarChar(10)
+  region          ESMRRegion @relation(fields: [regionCode], references: [code])
+
+  receivingWaterBody String? @db.VarChar(200)
+
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  locations        ESMRLocation[]
+  linkedFacilities Facility[]
+
+  @@index([regionCode])
+  @@index([facilityName])
+  @@index([receivingWaterBody])
+  @@map("esmr_facilities")
+}
+
+model ESMRLocation {
+  locationPlaceId Int          @id
+  facilityPlaceId Int
+  facility        ESMRFacility @relation(fields: [facilityPlaceId], references: [facilityPlaceId], onDelete: Cascade)
+
+  locationCode String           @db.VarChar(50)
+  locationType ESMRLocationType
+
+  latitude     Decimal? @db.Decimal(9, 6)
+  longitude    Decimal? @db.Decimal(9, 6)
+  locationDesc String?  @db.Text
+
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  samples ESMRSample[]
+
+  @@index([facilityPlaceId])
+  @@index([locationType])
+  @@map("esmr_locations")
+}
+
+enum ESMRLocationType {
+  EFFLUENT_MONITORING
+  INFLUENT_MONITORING
+  RECEIVING_WATER_MONITORING
+  RECYCLED_WATER_MONITORING
+  INTERNAL_MONITORING
+  GROUNDWATER_MONITORING
+
+  @@map("esmr_location_type")
+}
+
+model ESMRParameter {
+  id            String  @id @default(cuid())
+  parameterName String  @unique @db.VarChar(200)
+  category      String? @db.VarChar(100)
+
+  canonicalKey String?
+
+  notes String? @db.Text
+
+  samples ESMRSample[]
+
+  @@index([category])
+  @@map("esmr_parameters")
+}
+
+model ESMRAnalyticalMethod {
+  methodCode String  @id @db.VarChar(50)
+  methodName String  @db.VarChar(500)
+  category   String? @db.VarChar(100)
+  notes      String? @db.Text
+
+  samples ESMRSample[]
+
+  @@map("esmr_analytical_methods")
+}
+
+model ESMRSample {
+  id String @id @default(cuid())
+
+  locationPlaceId    Int
+  location           ESMRLocation          @relation(fields: [locationPlaceId], references: [locationPlaceId], onDelete: Cascade)
+  parameterId        String
+  parameter          ESMRParameter         @relation(fields: [parameterId], references: [id])
+  analyticalMethodId String?
+  analyticalMethod   ESMRAnalyticalMethod? @relation(fields: [analyticalMethodId], references: [methodCode])
+
+  samplingDate DateTime @db.Date
+  samplingTime DateTime @db.Time
+  analysisDate DateTime @db.Date
+  analysisTime DateTime @db.Time
+
+  qualifier        ESMRQualifier
+  result           Decimal?      @db.Decimal(18, 6)
+  units            String        @db.VarChar(50)
+  calculatedMethod String?       @db.VarChar(100)
+
+  mdl Decimal? @db.Decimal(18, 6)
+  ml  Decimal? @db.Decimal(18, 6)
+  rl  Decimal? @db.Decimal(18, 6)
+
+  reviewPriorityIndicator Boolean?
+  qaCodes                 String?  @db.VarChar(50)
+  comments                String?  @db.Text
+
+  reportName    String @db.VarChar(200)
+  smrDocumentId Int
+
+  createdAt DateTime @default(now())
+
+  violationSamples ViolationSample[]
+
+  @@unique([locationPlaceId, parameterId, samplingDate, samplingTime, smrDocumentId], name: "esmr_sample_unique")
+  @@index([locationPlaceId, samplingDate])
+  @@index([parameterId, samplingDate])
+  @@index([samplingDate])
+  @@index([smrDocumentId])
+  @@index([qualifier])
+  @@index([reviewPriorityIndicator])
+  @@map("esmr_samples")
+}
+
+enum ESMRQualifier {
+  DETECTED
+  LESS_THAN
+  GREATER_THAN
+  NOT_DETECTED
+  DETECTED_NOT_QUANTIFIED
+
+  @@map("esmr_qualifier")
+}
+
+model ESMRImport {
+  id String @id @default(cuid())
+
+  importDate DateTime @default(now())
+  sourceUrl  String   @db.Text
+  sourceFile String   @db.VarChar(500)
+  dataYear   Int
+
+  recordsProcessed Int
+  recordsInserted  Int
+  recordsUpdated   Int
+  recordsErrored   Int
+  errors           String? @db.Text
+
+  startedAt   DateTime
+  completedAt DateTime?
+
+  notes String? @db.Text
+
+  @@index([importDate])
+  @@index([dataYear])
+  @@map("esmr_imports")
+}
+
+model ESMRImportError {
+  id String @id @default(cuid())
+
+  importId     String
+  rowNumber    Int
+  rawData      String   @db.Text
+  errorMessage String   @db.Text
+  createdAt    DateTime @default(now())
+
+  @@index([importId])
+  @@map("esmr_import_errors")
+}
+
+// =============================================================================
+// SMARTS (Stormwater) Models - NEW
+// =============================================================================
+
+// Unified facility model for both Industrial and Construction
+// NOTE: Due to significant schema differences, using single table with nullable fields
+model SMARTSFacility {
+  id String @id @default(cuid())
+
+  // Primary identifiers (composite key)
+  wdid  String @db.VarChar(50) // e.g., "1 08I004046"
+  appId String @db.VarChar(50) // e.g., "178203"
+
+  // Core fields (common to both types)
+  permitType             String   @db.VarChar(50) // Industrial, Construction, Caltrans Construction
+  status                 String   @db.VarChar(50) // Active, Terminated
+  noiProcessedDate       DateTime? @db.Date
+  notEffectiveDate       DateTime? @db.Date
+  region                 String?  @db.VarChar(10) // Regional board
+  county                 String?  @db.VarChar(100)
+  facilityName           String   @db.VarChar(500)
+  facilityAddress        String?  @db.VarChar(500)
+  facilityAddress2       String?  @db.VarChar(500)
+  facilityCity           String?  @db.VarChar(100)
+  facilityState          String?  @db.VarChar(2)
+  facilityZip            String?  @db.VarChar(20)
+  facilityLatitude       Decimal? @db.Decimal(9, 6)
+  facilityLongitude      Decimal? @db.Decimal(9, 6)
+  facilityTotalSize      Decimal? @db.Decimal(12, 2)
+  facilityTotalSizeUnit  String?  @db.VarChar(50)
+  receivingWaterName     String?  @db.VarChar(500)
+  indirectlyDischarging  Boolean?
+  directlyDischarging    Boolean?
+
+  // Industrial-specific fields
+  operatorName           String?  @db.VarChar(500)
+  primarySic             String?  @db.VarChar(200)
+  secondarySic           String?  @db.VarChar(200)
+  tertiarySic            String?  @db.VarChar(200)
+  imperviousnessPercent  Int?
+
+  // Construction-specific fields
+  ownerName              String?  @db.VarChar(500)
+  developerName          String?  @db.VarChar(500)
+  siteDisturbedAcreage   Decimal? @db.Decimal(12, 2)
+  constructionType       String?  @db.Text // Multiple flags concatenated
+  qsdName                String?  @db.VarChar(200)
+  qsdCertNumber          String?  @db.VarChar(100)
+
+  // Contact information
+  contactFirstName       String?  @db.VarChar(100)
+  contactLastName        String?  @db.VarChar(100)
+  contactTitle           String?  @db.VarChar(200)
+  contactPhone           String?  @db.VarChar(50)
+  contactEmail           String?  @db.VarChar(200)
+
+  // Metadata
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  lastSeenAt             DateTime @default(now())
+
+  // Relationships
+  linkedFacilities     Facility[]
+  violations           SMARTSViolation[]
+  enforcementActions   SMARTSEnforcementAction[]
+  inspections          SMARTSInspection[]
+  monitoringReports    SMARTSMonitoringReport[]
+
+  @@unique([wdid, appId], name: "smarts_facility_unique")
+  @@index([permitType])
+  @@index([status])
+  @@index([region])
+  @@index([county])
+  @@index([facilityName])
+  @@index([primarySic])
+  @@map("smarts_facilities")
+}
+
+model SMARTSViolation {
+  id String @id @default(cuid())
+
+  // Facility linkage
+  wdid     String           @db.VarChar(50)
+  appId    String           @db.VarChar(50)
+  facility SMARTSFacility   @relation(fields: [wdid, appId], references: [wdid, appId], onDelete: Cascade)
+
+  // External IDs
+  violationId       String  @db.VarChar(50) // External SMARTS violation ID
+  violationSource   String? @db.VarChar(100) // Report, Inspection, Internal Report, Referral
+  violationSourceId String? @db.VarChar(50)
+
+  // Violation details
+  violationType      String?  @db.VarChar(200)
+  seriousViolation   Boolean?
+  violationPriority  String?  @db.VarChar(10)
+  occurrenceDate     DateTime? @db.Date
+  discoveryDate      DateTime? @db.Date
+  determinedBy       String?  @db.VarChar(100)
+  exemptFromMmp      Boolean?
+  memo               String?  @db.VarChar(500)
+  description        String?  @db.Text
+  violationStatus    String?  @db.VarChar(50) // Violation, Potential, Dismissed
+  linkedEnforcement  Boolean?
+
+  // Permit/jurisdiction
+  permitType    String? @db.VarChar(50)
+  regionalBoard String? @db.VarChar(10)
+
+  // Facility info (denormalized from source)
+  placeName            String?  @db.VarChar(500)
+  placeAddress         String?  @db.VarChar(500)
+  placeCity            String?  @db.VarChar(100)
+  placeCounty          String?  @db.VarChar(100)
+  placeLatitude        Decimal? @db.Decimal(9, 6)
+  placeLongitude       Decimal? @db.Decimal(9, 6)
+  receivingWaterName   String?  @db.VarChar(500)
+
+  // Metadata
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relationships
+  enforcementActions SMARTSEnforcementAction[]
+  inspectionLinks    SMARTSInspectionViolationLink[]
+
+  @@unique([wdid, appId, violationId], name: "smarts_violation_unique")
+  @@index([wdid, appId])
+  @@index([violationType])
+  @@index([occurrenceDate])
+  @@index([violationStatus])
+  @@index([seriousViolation])
+  @@index([permitType])
+  @@index([regionalBoard])
+  @@index([wdid, occurrenceDate])
+  @@map("smarts_violations")
+}
+
+model SMARTSEnforcementAction {
+  id String @id @default(cuid())
+
+  // Facility linkage
+  wdid     String           @db.VarChar(50)
+  appId    String           @db.VarChar(50)
+  facility SMARTSFacility   @relation(fields: [wdid, appId], references: [wdid, appId], onDelete: Cascade)
+
+  // Violation linkage (optional, not always provided in source data)
+  violationWdid  String?          @db.VarChar(50)
+  violationAppId String?          @db.VarChar(50)
+  violationId    String?          @db.VarChar(50)
+  violation      SMARTSViolation? @relation(fields: [violationWdid, violationAppId, violationId], references: [wdid, appId, violationId])
+
+  // External IDs
+  enforcementId String @db.VarChar(50) // External SMARTS enforcement ID
+
+  // Enforcement details
+  enforcementType   String?   @db.VarChar(100) // NNC, NOV, CAO, SEL, etc.
+  enforcementStatus String?   @db.VarChar(50) // Active, Historical, Withdrawn
+  issuanceDate      DateTime? @db.Date
+  dueDate           DateTime? @db.Date
+  description       String?   @db.Text
+  correctiveAction  String?   @db.Text
+  orderNumber       String?   @db.VarChar(100)
+
+  // Financial details (often null)
+  economicBenefits   Decimal? @db.Decimal(12, 2)
+  totalMaxLiability  Decimal? @db.Decimal(12, 2)
+  staffCosts         Decimal? @db.Decimal(12, 2)
+  initialAssessment  Decimal? @db.Decimal(12, 2)
+  totalAssessment    Decimal? @db.Decimal(12, 2)
+  receivedAmount     Decimal? @db.Decimal(12, 2)
+  spentAmount        Decimal? @db.Decimal(12, 2)
+  balanceDue         Decimal? @db.Decimal(12, 2)
+
+  // Dates
+  aclComplaintIssuanceDate DateTime? @db.Date
+  adoptionDate             DateTime? @db.Date
+  complianceDate           DateTime? @db.Date
+  eplIssuanceDate          DateTime? @db.Date
+  receivedDate             DateTime? @db.Date
+  waiverReceivedDate       DateTime? @db.Date
+
+  // Summary
+  countOfViolations Int?
+
+  // Permit/jurisdiction
+  permitType    String? @db.VarChar(50)
+  regionalBoard String? @db.VarChar(10)
+
+  // Facility info (denormalized)
+  placeName      String?  @db.VarChar(500)
+  placeAddress   String?  @db.VarChar(500)
+  placeCity      String?  @db.VarChar(100)
+  placeCounty    String?  @db.VarChar(100)
+  placeLatitude  Decimal? @db.Decimal(9, 6)
+  placeLongitude Decimal? @db.Decimal(9, 6)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([wdid, appId, enforcementId], name: "smarts_enforcement_unique")
+  @@index([wdid, appId])
+  @@index([violationWdid, violationAppId, violationId])
+  @@index([enforcementType])
+  @@index([enforcementStatus])
+  @@index([issuanceDate])
+  @@index([regionalBoard])
+  @@index([wdid, issuanceDate])
+  @@map("smarts_enforcement_actions")
+}
+
+model SMARTSInspection {
+  id String @id @default(cuid())
+
+  // Facility linkage
+  wdid     String           @db.VarChar(50)
+  appId    String           @db.VarChar(50)
+  facility SMARTSFacility   @relation(fields: [wdid, appId], references: [wdid, appId], onDelete: Cascade)
+
+  // External IDs
+  inspectionId String @db.VarChar(50)
+
+  // Inspection details
+  inspectionClassification String?   @db.VarChar(200)
+  inspectionStartTime      DateTime? @db.Time
+  inspectionEndTime        DateTime? @db.Time
+  inspectionStatus         String?   @db.VarChar(100)
+  inspectionPurpose        String?   @db.VarChar(200)
+  inspectionDate           DateTime? @db.Date
+  inspectionContact        String?   @db.VarChar(200)
+
+  // Inspector info
+  inspectorType        String? @db.VarChar(100)
+  inspectorName        String? @db.VarChar(200)
+  agencyName           String? @db.VarChar(200)
+  agencyInspectorName  String? @db.VarChar(200)
+
+  // Results
+  followUpAction           String?  @db.VarChar(500)
+  generalNotes             String?  @db.Text
+  virtualInspection        Boolean?
+  countOfViolations        Int?
+  finalInspectionReportUploadDate DateTime? @db.Date
+
+  // Permit/jurisdiction
+  permitType    String? @db.VarChar(50)
+  regionalBoard String? @db.VarChar(10)
+
+  // Facility info (denormalized)
+  placeName      String?  @db.VarChar(500)
+  placeAddress   String?  @db.VarChar(500)
+  placeCity      String?  @db.VarChar(100)
+  placeCounty    String?  @db.VarChar(100)
+  placeLatitude  Decimal? @db.Decimal(9, 6)
+  placeLongitude Decimal? @db.Decimal(9, 6)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  violationLinks SMARTSInspectionViolationLink[]
+
+  @@unique([wdid, appId, inspectionId], name: "smarts_inspection_unique")
+  @@index([wdid, appId])
+  @@index([inspectionDate])
+  @@index([inspectionPurpose])
+  @@index([regionalBoard])
+  @@index([wdid, inspectionDate])
+  @@map("smarts_inspections")
+}
+
+// Link table for inspection → violations (M:N relationship)
+model SMARTSInspectionViolationLink {
+  id String @id @default(cuid())
+
+  inspectionWdid  String           @db.VarChar(50)
+  inspectionAppId String           @db.VarChar(50)
+  inspectionId    String           @db.VarChar(50)
+  inspection      SMARTSInspection @relation(fields: [inspectionWdid, inspectionAppId, inspectionId], references: [wdid, appId, inspectionId], onDelete: Cascade)
+
+  violationWdid  String          @db.VarChar(50)
+  violationAppId String          @db.VarChar(50)
+  violationId    String          @db.VarChar(50)
+  violation      SMARTSViolation @relation(fields: [violationWdid, violationAppId, violationId], references: [wdid, appId, violationId], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([inspectionWdid, inspectionAppId, inspectionId, violationWdid, violationAppId, violationId], name: "inspection_violation_link_unique")
+  @@index([inspectionWdid, inspectionAppId, inspectionId])
+  @@index([violationWdid, violationAppId, violationId])
+  @@map("smarts_inspection_violation_links")
+}
+
+model SMARTSMonitoringReport {
+  id String @id @default(cuid())
+
+  // Facility linkage
+  wdid     String           @db.VarChar(50)
+  appId    String           @db.VarChar(50)
+  facility SMARTSFacility   @relation(fields: [wdid, appId], references: [wdid, appId], onDelete: Cascade)
+
+  // External IDs
+  reportId     String @db.VarChar(50) // Groups multiple samples from same storm event
+  reportYear   Int
+
+  // Event details
+  eventType         String?   @db.VarChar(200) // Qualifying Storm Event, Non-Storm Water
+  eventStartDate    DateTime? @db.Date
+  eventEndDate      DateTime? @db.Date
+  rainfallAmount    Decimal?  @db.Decimal(8, 2)
+  businessDays      Int?
+
+  // Monitoring location
+  monitoringLocationName        String?  @db.VarChar(200)
+  monitoringLocationType        String?  @db.VarChar(200)
+  monitoringLocationDescription String?  @db.Text
+  monitoringLatitude            Decimal? @db.Decimal(9, 6)
+  monitoringLongitude           Decimal? @db.Decimal(9, 6)
+
+  // Certification
+  certifierName String?   @db.VarChar(200)
+  certifiedDate DateTime? @db.Timestamp
+
+  // Permit type
+  permitType String? @db.VarChar(50)
+
+  // Metadata
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  samples SMARTSMonitoringSample[]
+
+  @@unique([wdid, appId, reportId], name: "smarts_monitoring_report_unique")
+  @@index([wdid, appId])
+  @@index([reportYear])
+  @@index([eventStartDate])
+  @@index([permitType])
+  @@map("smarts_monitoring_reports")
+}
+
+model SMARTSMonitoringSample {
+  id String @id @default(cuid())
+
+  // Report linkage
+  reportWdid  String                  @db.VarChar(50)
+  reportAppId String                  @db.VarChar(50)
+  reportId    String                  @db.VarChar(50)
+  report      SMARTSMonitoringReport  @relation(fields: [reportWdid, reportAppId, reportId], references: [wdid, appId, reportId], onDelete: Cascade)
+
+  // External IDs
+  sampleId String @db.VarChar(50)
+
+  // Sample details
+  sampleDate              DateTime  @db.Date
+  sampleTime              DateTime? @db.Time
+  dischargeStartDate      DateTime? @db.Date
+  dischargeStartTime      DateTime? @db.Time
+  dischargeEndDate        DateTime? @db.Date
+  dischargeEndTime        DateTime? @db.Time
+  percentOfTotalDischarge Int?
+
+  // Parameter
+  parameter        String   @db.VarChar(200)
+  resultQualifier  String?  @db.VarChar(10) // =, ND, <, >
+  result           Decimal? @db.Decimal(18, 6)
+  units            String   @db.VarChar(50)
+  analyticalMethod String?  @db.VarChar(100)
+  mdl              Decimal? @db.Decimal(18, 6)
+  rl               Decimal? @db.Decimal(18, 6)
+
+  // Quality
+  analyzedBy String? @db.VarChar(200) // Lab or field
+  qsp        Boolean? // Qualified SWPPP Practitioner
+
+  // Permit type
+  permitType String? @db.VarChar(50)
+
+  // Metadata
+  createdAt DateTime @default(now())
+
+  @@unique([reportWdid, reportAppId, reportId, sampleId, parameter, sampleDate], name: "smarts_monitoring_sample_unique")
+  @@index([reportWdid, reportAppId, reportId])
+  @@index([sampleDate])
+  @@index([parameter])
+  @@index([reportWdid, sampleDate, parameter])
+  @@map("smarts_monitoring_samples")
+}
+
+// Import tracking for SMARTS data
+model SMARTSImportLog {
+  id String @id @default(cuid())
+
+  dataType String @db.VarChar(100) // violations, enforcement, facilities, monitoring, inspections
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  status      String   @db.VarChar(50) // running, completed, failed
+
+  recordsProcessed Int @default(0)
+  recordsCreated   Int @default(0)
+  recordsUpdated   Int @default(0)
+  recordsSkipped   Int @default(0)
+  errors           Json?
+
+  notes String? @db.Text
+
+  @@index([dataType, startedAt])
+  @@map("smarts_import_logs")
+}
+
+// =============================================================================
+// INTEGRATION MODELS
+// =============================================================================
+
+// Manual facility linking when automatic matching fails
+model FacilityLink {
+  id String @id @default(cuid())
+
+  facilityId String @unique
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  // Links to eSMR
+  esmrFacilityId Int?
+  esmrFacility   ESMRFacility? @relation(fields: [esmrFacilityId], references: [facilityPlaceId])
+
+  // Links to SMARTS
+  smartsWdid     String?           @db.VarChar(50)
+  smartsAppId    String?           @db.VarChar(50)
+  smartsFacility SMARTSFacility?   @relation(fields: [smartsWdid, smartsAppId], references: [wdid, appId])
+
+  // Linking metadata
+  linkMethod LinkMethod
+  confidence Float      @db.Real // 0.0-1.0
+  notes      String?    @db.Text
+  verifiedBy String?    @db.VarChar(200)
+  verifiedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([esmrFacilityId])
+  @@index([smartsWdid, smartsAppId])
+  @@index([linkMethod, confidence])
+  @@map("facility_links")
+}
+
+enum LinkMethod {
+  DIRECT        // Tier 1: WDID parsing matched
+  FUZZY         // Tier 2: Name + location fuzzy match
+  MANUAL        // Tier 3: Manually verified
+  UNLINKED      // No match found
+
+  @@map("link_method")
+}
+
+// Track data quality issues found during import
+model DataQualityIssue {
+  id String @id @default(cuid())
+
+  table    String @db.VarChar(100)
+  recordId String @db.VarChar(100)
+  issue    String @db.VarChar(200) // UNKNOWN_UNITS, INVALID_DATE, MISSING_COORDS, etc.
+  details  String? @db.Text
+  resolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([table, issue])
+  @@index([resolved])
+  @@map("data_quality_issues")
+}
+
+// Cache geocoding results to avoid repeated API calls
+model GeocodeCache {
+  id String @id @default(cuid())
+
+  address String @unique @db.VarChar(500)
+  lat     Decimal @db.Decimal(9, 6)
+  lon     Decimal @db.Decimal(9, 6)
+
+  geocodedAt DateTime @default(now())
+
+  @@index([address])
+  @@map("geocode_cache")
+}

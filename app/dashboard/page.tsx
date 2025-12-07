@@ -229,185 +229,149 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Mission Control Header */}
-      <div className="bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 border-b border-border/50">
-        <div className="container mx-auto py-12 px-4">
-          <div className="max-w-4xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
-              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Live Monitoring
-              </span>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-4 slide-in-bottom">
-              Water Quality{" "}
-              <span className="text-gradient">Command Center</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl slide-in-bottom" style={{ animationDelay: "0.1s" }}>
-              Real-time tracking of industrial stormwater violations across California watersheds.
-              Empowering communities to protect clean water.
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex flex-1 flex-col gap-6 p-6">
       {/* Database Error Alert */}
       {dbError && (
-        <div className="container mx-auto px-4 pt-8">
-          <Card className="border-destructive bg-destructive/5">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                <div>
-                  <h3 className="font-semibold text-destructive">Unable to Load Data</h3>
-                  <p className="text-sm text-muted-foreground mt-1">{dbError}</p>
-                </div>
+        <Card className="border-destructive bg-destructive/5">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              <div>
+                <h3 className="font-semibold text-destructive">Unable to Load Data</h3>
+                <p className="text-sm text-muted-foreground mt-1">{dbError}</p>
               </div>
             </CardContent>
           </Card>
-        </div>
+        </Card>
       )}
+      {/* Filters */}
+      <DashboardFilters
+        availablePollutants={availablePollutants}
+        availableCounties={availableCounties}
+        availableHuc12s={availableHuc12s}
+        availableMs4s={availableMs4s}
+        availableYears={availableYears}
+      />
 
-      {/* Main Content */}
-      <div className="container mx-auto py-8 px-4 space-y-8">
-        {/* Filters */}
-        <div className="slide-in-bottom" style={{ animationDelay: "0.2s" }}>
-          <DashboardFilters
-            availablePollutants={availablePollutants}
-            availableCounties={availableCounties}
-            availableHuc12s={availableHuc12s}
-            availableMs4s={availableMs4s}
-            availableYears={availableYears}
-          />
-        </div>
+      {/* Stats Overview */}
+      <StatsCards violations={violations} facilities={facilities} />
 
-        {/* Stats Overview */}
-        <div className="slide-in-bottom" style={{ animationDelay: "0.3s" }}>
-          <StatsCards violations={violations} facilities={facilities} />
-        </div>
+      {/* eSMR Stats Section */}
+      {esmrStats && <ESMRStatsCards stats={esmrStats} />}
 
-        {/* eSMR Stats Section */}
-        {esmrStats && (
-          <div className="slide-in-bottom" style={{ animationDelay: "0.35s" }}>
-            <ESMRStatsCards stats={esmrStats} />
-          </div>
-        )}
-
-        {/* Map and Data Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Large Map Section */}
-          <Card className="xl:col-span-2 overflow-hidden slide-in-bottom" style={{ animationDelay: "0.4s" }}>
-            <CardHeader className="border-b bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-2xl">California Facility Network</CardTitle>
-                  <CardDescription className="mt-1">
-                    Interactive map showing violation hotspots and watershed boundaries
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-destructive" />
-                    <span className="text-muted-foreground">Critical</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <div className="w-3 h-3 rounded-full bg-orange-500" />
-                    <span className="text-muted-foreground">Active</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <DashboardMap facilities={facilities} violations={violations} />
-            </CardContent>
-          </Card>
-
-          {/* Top Counties Sidebar */}
-          <Card className="slide-in-bottom" style={{ animationDelay: "0.5s" }}>
-            <CardHeader className="border-b bg-muted/30">
-              <CardTitle>Regional Hotspots</CardTitle>
-              <CardDescription>Counties by violation count</CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                {(() => {
-                  const byCounty = violations.reduce(
-                    (acc: { county: string | null; count: number }[], v) => {
-                      const existing = acc.find((c: { county: string | null; count: number }) => c.county === v.facility.county)
-                      if (existing) {
-                        existing.count++
-                      } else {
-                        acc.push({ county: v.facility.county, count: 1 })
-                      }
-                      return acc
-                    },
-                    [] as { county: string | null; count: number }[],
-                  ).sort((a, b) => b.count - a.count).slice(0, 8)
-
-                  return byCounty.length > 0 ? (
-                    byCounty.map((item, i) => (
-                      <div key={item.county || `unknown-${i}`} className="flex items-center justify-between group hover:bg-muted/50 -mx-4 px-4 py-2 rounded-lg transition-colors">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-muted-foreground w-6">
-                            #{i + 1}
-                          </span>
-                          <span className="font-medium">{item.county}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="h-1.5 rounded-full bg-primary/20"
-                            style={{
-                              width: `${Math.max(40, (item.count / byCounty[0].count) * 100)}px`
-                            }}
-                          >
-                            <div
-                              className="h-full rounded-full bg-primary transition-all duration-500"
-                              style={{
-                                width: `${(item.count / byCounty[0].count) * 100}%`
-                              }}
-                            />
-                          </div>
-                          <span className="text-lg font-bold w-8 text-right">{item.count}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No violations to display
-                    </div>
-                  )
-                })()}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Violations Table */}
-        <Card className="slide-in-bottom" style={{ animationDelay: "0.6s" }}>
-          <CardHeader className="border-b bg-muted/30">
+      {/* Map and Data Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Large Map Section */}
+        <Card className="xl:col-span-2 overflow-hidden">
+          <CardHeader className="border-b">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl">Active Violation Events</CardTitle>
+                <CardTitle className="text-xl">California Facility Network</CardTitle>
                 <CardDescription className="mt-1">
-                  Exceedances requiring investigation and enforcement action
+                  Interactive map showing violation hotspots and watershed boundaries
                 </CardDescription>
               </div>
-              <div className="text-sm text-muted-foreground">
-                Showing {violations.length} {violations.length === 1 ? 'event' : 'events'}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-3 h-3 rounded-full bg-destructive" />
+                  <span className="text-muted-foreground">Critical</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <span className="text-muted-foreground">Active</span>
+                </div>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ViolationsTable violations={violations} />
+            <DashboardMap facilities={facilities} violations={violations} />
           </CardContent>
         </Card>
 
-        {/* eSMR Recent Activity */}
-        {esmrRecentSamples.length > 0 && (
-          <ESMRRecentActivity samples={esmrRecentSamples} />
-        )}
+        {/* Top Counties Sidebar */}
+        <Card>
+          <CardHeader className="border-b">
+            <CardTitle>Regional Hotspots</CardTitle>
+            <CardDescription>Counties by violation count</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {(() => {
+                const byCounty = violations.reduce(
+                  (acc: { county: string | null; count: number }[], v) => {
+                    const existing = acc.find((c: { county: string | null; count: number }) => c.county === v.facility.county)
+                    if (existing) {
+                      existing.count++
+                    } else {
+                      acc.push({ county: v.facility.county, count: 1 })
+                    }
+                    return acc
+                  },
+                  [] as { county: string | null; count: number }[],
+                ).sort((a, b) => b.count - a.count).slice(0, 8)
+
+                return byCounty.length > 0 ? (
+                  byCounty.map((item, i) => (
+                    <div key={item.county || `unknown-${i}`} className="flex items-center justify-between group hover:bg-muted/50 -mx-4 px-4 py-2 rounded-lg transition-colors">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-muted-foreground w-6">
+                          #{i + 1}
+                        </span>
+                        <span className="font-medium">{item.county}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-1.5 rounded-full bg-primary/20"
+                          style={{
+                            width: `${Math.max(40, (item.count / byCounty[0].count) * 100)}px`
+                          }}
+                        >
+                          <div
+                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            style={{
+                              width: `${(item.count / byCounty[0].count) * 100}%`
+                            }}
+                          />
+                        </div>
+                        <span className="text-lg font-bold w-8 text-right">{item.count}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No violations to display
+                  </div>
+                )
+              })()}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Violations Table */}
+      <Card>
+        <CardHeader className="border-b">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">Active Violation Events</CardTitle>
+              <CardDescription className="mt-1">
+                Exceedances requiring investigation and enforcement action
+              </CardDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Showing {violations.length} {violations.length === 1 ? 'event' : 'events'}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ViolationsTable violations={violations} />
+        </CardContent>
+      </Card>
+
+      {/* eSMR Recent Activity */}
+      {esmrRecentSamples.length > 0 && (
+        <ESMRRecentActivity samples={esmrRecentSamples} />
+      )}
     </div>
   )
 }

@@ -1,7 +1,15 @@
 import type React from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { BarChart3, Bell } from "lucide-react"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { Separator } from "@/components/ui/separator"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 export default async function DashboardLayout({
   children,
@@ -15,48 +23,35 @@ export default async function DashboardLayout({
   // }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <BarChart3 className="w-6 h-6" />
-            <span className="font-bold text-lg">Stormwater Watch</span>
-          </Link>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        {/* Laboratory-style header */}
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex flex-1 items-center gap-2 px-3">
+            <SidebarTrigger />
+            <Separator orientation="vertical" className="h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
 
-          <nav className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button variant="ghost">Dashboard</Button>
-            </Link>
-            <Link href="/esmr">
-              <Button variant="ghost">eSMR Data</Button>
-            </Link>
-            <Link href="/subscriptions">
-              <Button variant="ghost">
-                <Bell className="w-4 h-4 mr-2" />
-                Subscriptions
-              </Button>
-            </Link>
-            <Link href="/ingest">
-              <Button variant="ghost">Ingest</Button>
-            </Link>
-            {/* Auth disabled - sign out button hidden
-            <form
-              action={async () => {
-                "use server"
-                // await signOut()
-              }}
-            >
-              <Button variant="ghost" type="submit">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </form>
-            */}
-          </nav>
-        </div>
-      </header>
+          {/* Top-right status indicators (SMARTS-ready) */}
+          <div className="flex items-center gap-2 px-4">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+              <span>Live</span>
+            </div>
+          </div>
+        </header>
 
-      <main>{children}</main>
-    </div>
+        {/* Main content area */}
+        <main className="flex-1">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }

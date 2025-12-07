@@ -73,7 +73,7 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
     }
   }, [violations, facilities])
 
-  // Mission-critical card styling
+  // Laboratory card styling - clean, clinical, data-focused
   const StatCard = ({
     label,
     value,
@@ -91,22 +91,22 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
     alert?: boolean
     className?: string
   }) => (
-    <Card className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${className} ${alert ? 'pulse-glow border-destructive' : ''}`}>
+    <Card className={`relative overflow-hidden border ${className} ${alert ? 'border-destructive/50' : ''}`}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-lg ${iconColor}`}>
-            <Icon className="w-6 h-6" />
+          <div className={`p-2.5 rounded-md ${iconColor}`}>
+            <Icon className="w-5 h-5" />
           </div>
           {alert && (
-            <span className="badge-critical">Alert</span>
+            <span className="status-critical">Alert</span>
           )}
         </div>
         <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             {label}
           </p>
           <div className="flex items-baseline gap-2">
-            <p className="text-4xl font-bold tracking-tight">{value}</p>
+            <p className="text-3xl font-bold tracking-tight">{value}</p>
             {trend && (
               <span className="text-xs text-muted-foreground">
                 {trend}
@@ -114,16 +114,12 @@ export function StatsCards({ violations = [], facilities = [] }: StatsCardsProps
             )}
           </div>
         </div>
-        {/* Subtle background pattern */}
-        <div className="absolute top-0 right-0 w-32 h-32 opacity-5">
-          <Icon className="w-full h-full" />
-        </div>
       </CardContent>
     </Card>
   )
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 fade-in-scale">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <StatCard
         label="Active Violations"
         value={stats.total}

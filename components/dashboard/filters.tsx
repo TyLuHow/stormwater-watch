@@ -1,19 +1,16 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useTransition } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
-import { X, Download, Filter } from "lucide-react"
+import { X, ChevronDown, ChevronUp, SlidersHorizontal } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Slider } from "@/components/ui/slider"
 
 interface DashboardFiltersProps {
   availablePollutants: string[]
@@ -34,6 +31,8 @@ export function DashboardFilters({
 }: DashboardFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
+  const [isExpanded, setIsExpanded] = useState(false)
 
   // Filter state from URL params
   const [selectedPollutants, setSelectedPollutants] = useState<string[]>(
@@ -66,6 +65,26 @@ export function DashboardFilters({
   const [dateTo, setDateTo] = useState<Date | undefined>(
     searchParams.get("dateTo") ? new Date(searchParams.get("dateTo")!) : undefined
   )
+
+  // Auto-apply filters with debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      updateURL()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [
+    selectedPollutants,
+    selectedCounties,
+    selectedHuc12s,
+    selectedMs4s,
+    selectedYears,
+    minRatio,
+    impairedOnly,
+    hideDismissed,
+    dateFrom,
+    dateTo,
+  ])
 
   // Update URL when filters change
   const updateURL = useCallback(() => {
@@ -102,7 +121,9 @@ export function DashboardFilters({
       params.set("dateTo", format(dateTo, "yyyy-MM-dd"))
     }
 
-    router.push(`/dashboard?${params.toString()}`)
+    startTransition(() => {
+      router.push(`/dashboard?${params.toString()}`)
+    })
   }, [
     selectedPollutants,
     selectedCounties,
@@ -117,37 +138,6 @@ export function DashboardFilters({
     router,
   ])
 
-  // Persist to localStorage
-  useEffect(() => {
-    const filterState = {
-      selectedPollutants,
-      selectedCounties,
-      selectedYears,
-      minRatio,
-      impairedOnly,
-      hideDismissed,
-    }
-    localStorage.setItem("dashboardFilters", JSON.stringify(filterState))
-  }, [selectedPollutants, selectedCounties, selectedYears, minRatio, impairedOnly, hideDismissed])
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const saved = localStorage.getItem("dashboardFilters")
-    if (saved) {
-      try {
-        const state = JSON.parse(saved)
-        if (state.selectedPollutants) setSelectedPollutants(state.selectedPollutants)
-        if (state.selectedCounties) setSelectedCounties(state.selectedCounties)
-        if (state.selectedYears) setSelectedYears(state.selectedYears)
-        if (state.minRatio) setMinRatio(state.minRatio)
-        if (state.impairedOnly !== undefined) setImpairedOnly(state.impairedOnly)
-        if (state.hideDismissed !== undefined) setHideDismissed(state.hideDismissed)
-      } catch (e) {
-        // Ignore parse errors
-      }
-    }
-  }, [])
-
   const clearAllFilters = () => {
     setSelectedPollutants([])
     setSelectedCounties([])
@@ -159,7 +149,6 @@ export function DashboardFilters({
     setHideDismissed(true)
     setDateFrom(undefined)
     setDateTo(undefined)
-    router.push("/dashboard")
   }
 
   const activeFilterCount =
@@ -180,263 +169,448 @@ export function DashboardFilters({
     }
   }
 
+  const removeFilter = (type: string, value?: string) => {
+    switch (type) {
+      case "pollutant":
+        if (value) setSelectedPollutants(selectedPollutants.filter((p) => p !== value))
+        break
+      case "county":
+        if (value) setSelectedCounties(selectedCounties.filter((c) => c !== value))
+        break
+      case "huc12":
+        if (value) setSelectedHuc12s(selectedHuc12s.filter((h) => h !== value))
+        break
+      case "ms4":
+        if (value) setSelectedMs4s(selectedMs4s.filter((m) => m !== value))
+        break
+      case "year":
+        if (value) setSelectedYears(selectedYears.filter((y) => y !== value))
+        break
+      case "ratio":
+        setMinRatio(1.0)
+        break
+      case "impaired":
+        setImpairedOnly(false)
+        break
+      case "date":
+        setDateFrom(undefined)
+        setDateTo(undefined)
+        break
+    }
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
+    <div className="bg-card border border-border rounded-lg shadow-sm">
+      {/* Compact Header - Always Visible */}
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="shrink-0"
+          >
+            <SlidersHorizontal className="w-4 h-4 mr-2" />
             Filters
             {activeFilterCount > 0 && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-xs">
                 {activeFilterCount}
               </Badge>
             )}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {activeFilterCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                <X className="w-4 h-4 mr-1" />
-                Clear All
-              </Button>
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 ml-2" />
+            ) : (
+              <ChevronDown className="w-4 h-4 ml-2" />
             )}
-            {onExport && (
-              <Button variant="outline" size="sm" onClick={onExport}>
-                <Download className="w-4 h-4 mr-1" />
-                Export CSV
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Pollutants */}
-          <div className="space-y-2">
-            <Label>
-              Pollutants
-              {selectedPollutants.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {selectedPollutants.length}
-                </Badge>
-              )}
-            </Label>
-            <div className="space-y-2">
-              <Select
-                value={selectedPollutants.length > 0 ? selectedPollutants[0] : ""}
-                onValueChange={(value) => {
-                  if (!selectedPollutants.includes(value)) {
-                    setSelectedPollutants([...selectedPollutants, value])
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Add pollutant" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availablePollutants
-                    .filter((p) => !selectedPollutants.includes(p))
-                    .map((pollutant) => (
-                      <SelectItem key={pollutant} value={pollutant}>
-                        {pollutant}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {selectedPollutants.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedPollutants.map((p) => (
-                  <Badge key={p} variant="secondary" className="text-xs">
-                    {p}
-                    <button
-                      onClick={() => toggleArrayItem(selectedPollutants, setSelectedPollutants, p)}
-                      className="ml-1"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* County */}
-          <div className="space-y-2">
-            <Label>
-              County
-              {selectedCounties.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {selectedCounties.length}
-                </Badge>
-              )}
-            </Label>
-            <Select
-              value={selectedCounties.length > 0 ? selectedCounties[0] : ""}
-              onValueChange={(value) => {
-                if (!selectedCounties.includes(value)) {
-                  setSelectedCounties([...selectedCounties, value])
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Add county" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableCounties
-                  .filter((c) => !selectedCounties.includes(c))
-                  .map((county) => (
-                    <SelectItem key={county} value={county}>
-                      {county}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            {selectedCounties.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedCounties.map((c) => (
-                  <Badge key={c} variant="secondary" className="text-xs">
-                    {c}
-                    <button
-                      onClick={() => toggleArrayItem(selectedCounties, setSelectedCounties, c)}
-                      className="ml-1"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Reporting Year */}
-          <div className="space-y-2">
-            <Label>
-              Reporting Year
-              {selectedYears.length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {selectedYears.length}
-                </Badge>
-              )}
-            </Label>
-            <Select
-              value={selectedYears.length > 0 ? selectedYears[0] : ""}
-              onValueChange={(value) => {
-                if (!selectedYears.includes(value)) {
-                  setSelectedYears([...selectedYears, value])
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Add year" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears
-                  .filter((y) => !selectedYears.includes(y))
-                  .map((year) => (
-                    <SelectItem key={year} value={year}>
-                      {year}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            {selectedYears.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {selectedYears.map((y) => (
-                  <Badge key={y} variant="secondary" className="text-xs">
-                    {y}
-                    <button
-                      onClick={() => toggleArrayItem(selectedYears, setSelectedYears, y)}
-                      className="ml-1"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Min Ratio */}
-          <div className="space-y-2">
-            <Label>
-              Min Exceedance Ratio: {minRatio.toFixed(1)}×
-            </Label>
-            <Slider
-              value={[minRatio]}
-              onValueChange={([value]) => setMinRatio(value)}
-              min={1.0}
-              max={10.0}
-              step={0.5}
-              className="w-full"
-            />
-          </div>
-
-          {/* Date Range */}
-          <div className="space-y-2">
-            <Label>Sample Date Range</Label>
-            <div className="flex gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    {dateFrom ? format(dateFrom, "MMM dd, yyyy") : "From"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateFrom}
-                    onSelect={setDateFrom}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start text-left font-normal">
-                    {dateTo ? format(dateTo, "MMM dd, yyyy") : "To"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={dateTo}
-                    onSelect={setDateTo}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="impairedOnly"
-                checked={impairedOnly}
-                onCheckedChange={setImpairedOnly}
-              />
-              <Label htmlFor="impairedOnly">Impaired Waters Only</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="hideDismissed"
-                checked={hideDismissed}
-                onCheckedChange={setHideDismissed}
-              />
-              <Label htmlFor="hideDismissed">Hide Dismissed</Label>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <Button onClick={updateURL} className="w-full">
-            Apply Filters
           </Button>
+
+          {/* Active Filter Chips - Collapsed State */}
+          {!isExpanded && activeFilterCount > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto flex-1 min-w-0 no-scrollbar">
+              {selectedPollutants.map((p) => (
+                <Badge
+                  key={p}
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("pollutant", p)}
+                >
+                  {p}
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              ))}
+              {selectedCounties.map((c) => (
+                <Badge
+                  key={c}
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("county", c)}
+                >
+                  {c}
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              ))}
+              {selectedYears.map((y) => (
+                <Badge
+                  key={y}
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("year", y)}
+                >
+                  {y}
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              ))}
+              {minRatio > 1.0 && (
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("ratio")}
+                >
+                  Ratio ≥{minRatio.toFixed(1)}×
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              )}
+              {impairedOnly && (
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("impaired")}
+                >
+                  Impaired Waters
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              )}
+              {(dateFrom || dateTo) && (
+                <Badge
+                  variant="secondary"
+                  className="shrink-0 h-6 px-2 text-xs hover:bg-secondary/80 cursor-pointer"
+                  onClick={() => removeFilter("date")}
+                >
+                  {dateFrom && format(dateFrom, "MM/dd/yy")}
+                  {dateFrom && dateTo && " - "}
+                  {dateTo && format(dateTo, "MM/dd/yy")}
+                  <X className="w-3 h-3 ml-1" />
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {activeFilterCount > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+              <X className="w-4 h-4 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Expanded Filter Controls */}
+      {isExpanded && (
+        <div className="border-t border-border px-4 py-4 space-y-4">
+          {/* Row 1: Main Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Pollutants Multi-Select */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Pollutants</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between h-9 text-xs font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedPollutants.length > 0
+                        ? `${selectedPollutants.length} selected`
+                        : "Any pollutant"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="start">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {availablePollutants.sort().map((pollutant) => (
+                      <div key={pollutant} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`pollutant-${pollutant}`}
+                          checked={selectedPollutants.includes(pollutant)}
+                          onCheckedChange={() =>
+                            toggleArrayItem(selectedPollutants, setSelectedPollutants, pollutant)
+                          }
+                        />
+                        <Label
+                          htmlFor={`pollutant-${pollutant}`}
+                          className="text-xs font-normal cursor-pointer"
+                        >
+                          {pollutant}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Counties Multi-Select */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Counties</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between h-9 text-xs font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedCounties.length > 0
+                        ? `${selectedCounties.length} selected`
+                        : "Any county"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-3" align="start">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {availableCounties.sort().map((county) => (
+                      <div key={county} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`county-${county}`}
+                          checked={selectedCounties.includes(county)}
+                          onCheckedChange={() =>
+                            toggleArrayItem(selectedCounties, setSelectedCounties, county)
+                          }
+                        />
+                        <Label
+                          htmlFor={`county-${county}`}
+                          className="text-xs font-normal cursor-pointer"
+                        >
+                          {county}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Years Multi-Select */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Reporting Years</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between h-9 text-xs font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedYears.length > 0
+                        ? `${selectedYears.length} selected`
+                        : "Any year"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-3" align="start">
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {availableYears.sort().reverse().map((year) => (
+                      <div key={year} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`year-${year}`}
+                          checked={selectedYears.includes(year)}
+                          onCheckedChange={() =>
+                            toggleArrayItem(selectedYears, setSelectedYears, year)
+                          }
+                        />
+                        <Label
+                          htmlFor={`year-${year}`}
+                          className="text-xs font-normal cursor-pointer"
+                        >
+                          {year}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Date Range */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Date Range</Label>
+              <div className="flex gap-1.5">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-start h-9 text-xs font-normal"
+                    >
+                      {dateFrom ? format(dateFrom, "MM/dd/yy") : "From"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 justify-start h-9 text-xs font-normal"
+                    >
+                      {dateTo ? format(dateTo, "MM/dd/yy") : "To"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={dateTo} onSelect={setDateTo} />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Advanced Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* HUC12 Watersheds */}
+            {availableHuc12s.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">HUC12 Watersheds</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between h-9 text-xs font-normal"
+                    >
+                      <span className="truncate">
+                        {selectedHuc12s.length > 0
+                          ? `${selectedHuc12s.length} selected`
+                          : "Any watershed"}
+                      </span>
+                      <ChevronDown className="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" align="start">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {availableHuc12s.sort().map((huc12) => (
+                        <div key={huc12} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`huc12-${huc12}`}
+                            checked={selectedHuc12s.includes(huc12)}
+                            onCheckedChange={() =>
+                              toggleArrayItem(selectedHuc12s, setSelectedHuc12s, huc12)
+                            }
+                          />
+                          <Label
+                            htmlFor={`huc12-${huc12}`}
+                            className="text-xs font-normal cursor-pointer"
+                          >
+                            {huc12}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {/* MS4 Areas */}
+            {availableMs4s.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">MS4 Areas</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-between h-9 text-xs font-normal"
+                    >
+                      <span className="truncate">
+                        {selectedMs4s.length > 0
+                          ? `${selectedMs4s.length} selected`
+                          : "Any MS4"}
+                      </span>
+                      <ChevronDown className="w-4 h-4 ml-2 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-3" align="start">
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {availableMs4s.sort().map((ms4) => (
+                        <div key={ms4} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`ms4-${ms4}`}
+                            checked={selectedMs4s.includes(ms4)}
+                            onCheckedChange={() =>
+                              toggleArrayItem(selectedMs4s, setSelectedMs4s, ms4)
+                            }
+                          />
+                          <Label
+                            htmlFor={`ms4-${ms4}`}
+                            className="text-xs font-normal cursor-pointer"
+                          >
+                            {ms4}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {/* Min Exceedance Ratio */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">
+                Min Ratio: {minRatio.toFixed(1)}×
+              </Label>
+              <Slider
+                value={[minRatio]}
+                onValueChange={([value]) => setMinRatio(value)}
+                min={1.0}
+                max={10.0}
+                step={0.5}
+                className="w-full mt-2"
+              />
+            </div>
+
+            {/* Toggle Switches */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 h-9">
+                <Checkbox
+                  id="impairedOnly"
+                  checked={impairedOnly}
+                  onCheckedChange={(checked) => setImpairedOnly(checked === true)}
+                />
+                <Label htmlFor="impairedOnly" className="text-xs font-normal cursor-pointer">
+                  Impaired Waters Only
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 h-9">
+                <Checkbox
+                  id="hideDismissed"
+                  checked={hideDismissed}
+                  onCheckedChange={(checked) => setHideDismissed(checked === true)}
+                />
+                <Label htmlFor="hideDismissed" className="text-xs font-normal cursor-pointer">
+                  Hide Dismissed Violations
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Loading Indicator */}
+          {isPending && (
+            <div className="text-xs text-muted-foreground text-center py-2">
+              Applying filters...
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
-
