@@ -240,8 +240,8 @@ export default async function DashboardPage({
                 <h3 className="font-semibold text-destructive">Unable to Load Data</h3>
                 <p className="text-sm text-muted-foreground mt-1">{dbError}</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
         </Card>
       )}
       {/* Filters */}
