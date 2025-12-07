@@ -517,18 +517,12 @@ export default function LandingPage() {
                 <p className="text-muted-foreground mb-4 leading-relaxed">
                   Stormwater Watch is MIT licensed and built in public. Contribute code, report bugs, or suggest features on GitHub.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="flex justify-center">
                   <Button asChild variant="outline">
                     <a href="https://github.com/TyLuHow/stormwater-watch" target="_blank" rel="noopener noreferrer">
                       <Github className="mr-2 h-4 w-4" />
                       View on GitHub
                     </a>
-                  </Button>
-                  <Button asChild variant="ghost">
-                    <Link href="/esmr">
-                      <Database className="mr-2 h-4 w-4" />
-                      Explore eSMR Data
-                    </Link>
                   </Button>
                 </div>
               </div>
@@ -548,11 +542,6 @@ export default function LandingPage() {
                 <li>
                   <Link href="/dashboard" className="hover:text-foreground transition-colors">
                     Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/esmr" className="hover:text-foreground transition-colors">
-                    eSMR Data Explorer
                   </Link>
                 </li>
                 <li>
