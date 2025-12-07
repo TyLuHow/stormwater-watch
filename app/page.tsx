@@ -344,45 +344,55 @@ export default function LandingPage() {
                       source: "eSMR (Electronic Self-Monitoring Reports)",
                       description: "1.2M+ water quality samples from industrial stormwater facilities, 2006-2025",
                       update: "Weekly automated sync",
-                      url: "CIWQS eSMR Portal",
+                      status: "✓ Functional",
+                      statusColor: "text-green-600",
                     },
                     {
                       source: "CIWQS/SMARTS Interactive Violation Reports",
                       description: "Formal enforcement actions, permit violations, compliance status",
-                      update: "Weekly manual import (automation in progress)",
-                      url: "SMARTS Portal",
+                      update: "Manual import",
+                      status: "⚙ In Development",
+                      statusColor: "text-orange-600",
                     },
                     {
                       source: "CalEnviroScreen 4.0",
                       description: "Disadvantaged Community (DAC) designations, pollution burden scores",
-                      update: "Quarterly updates from OEHHA",
-                      url: "oehha.ca.gov/calenviroscreen",
+                      update: "Spatial enrichment",
+                      status: "✓ Functional",
+                      statusColor: "text-green-600",
                     },
                     {
                       source: "USGS Watershed Boundary Dataset",
                       description: "HUC12 watershed polygons for spatial context",
-                      update: "Annual updates",
-                      url: "USGS National Hydrography",
+                      update: "Spatial enrichment",
+                      status: "✓ Functional",
+                      statusColor: "text-green-600",
                     },
                     {
                       source: "EPA 303(d) Impaired Waters List",
                       description: "California water bodies impaired by pollutants",
-                      update: "Biennial updates",
-                      url: "EPA ATTAINS Database",
+                      update: "Receiving water analysis",
+                      status: "○ Planned",
+                      statusColor: "text-muted-foreground",
                     },
                     {
                       source: "NOAA/NWS Precipitation Data",
                       description: "Observed rainfall for wet weather discharge context",
-                      update: "Real-time via Weather.gov API",
-                      url: "weather.gov",
+                      update: "Case packet generation",
+                      status: "✓ Functional",
+                      statusColor: "text-green-600",
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
                       <Database className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-1">
                           <h4 className="font-semibold">{item.source}</h4>
-                          <span className="text-xs font-medium text-primary uppercase tracking-wide">{item.update}</span>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className={`font-semibold ${item.statusColor}`}>{item.status}</span>
+                            <span className="text-muted-foreground">·</span>
+                            <span className="text-muted-foreground">{item.update}</span>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
                       </div>
@@ -469,7 +479,7 @@ export default function LandingPage() {
               <div className="mt-8 text-center">
                 <p className="text-sm text-muted-foreground">
                   Have ideas or feature requests?{" "}
-                  <a href="https://github.com/tylerjrbuell/stormwater-watch/issues" className="text-primary hover:underline font-medium">
+                  <a href="https://github.com/TyLuHow/stormwater-watch/issues" className="text-primary hover:underline font-medium">
                     Open an issue on GitHub
                   </a>
                 </p>
@@ -509,7 +519,7 @@ export default function LandingPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button asChild variant="outline">
-                    <a href="https://github.com/tylerjrbuell/stormwater-watch" target="_blank" rel="noopener noreferrer">
+                    <a href="https://github.com/TyLuHow/stormwater-watch" target="_blank" rel="noopener noreferrer">
                       <Github className="mr-2 h-4 w-4" />
                       View on GitHub
                     </a>
@@ -558,17 +568,17 @@ export default function LandingPage() {
               <h4 className="font-semibold text-sm uppercase tracking-wide">Resources</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="https://github.com/tylerjrbuell/stormwater-watch" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  <a href="https://github.com/TyLuHow/stormwater-watch" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     GitHub Repository
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/tylerjrbuell/stormwater-watch/issues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  <a href="https://github.com/TyLuHow/stormwater-watch/issues" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     Report an Issue
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/tylerjrbuell/stormwater-watch/blob/main/FEATURES.md" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                  <a href="https://github.com/TyLuHow/stormwater-watch/blob/main/FEATURES.md" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
                     Documentation
                   </a>
                 </li>
