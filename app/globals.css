@@ -354,40 +354,139 @@
 
   /* Laboratory status badges (SMARTS-ready) */
   .status-badge {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium uppercase tracking-wide transition-colors;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition-property: color, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
   }
 
   .status-compliant {
-    @apply status-badge bg-[oklch(var(--status-compliant))]/10 text-[oklch(var(--status-compliant))] border border-[oklch(var(--status-compliant))]/20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-compliant) l c h / 0.1);
+    color: var(--status-compliant);
+    border: 1px solid oklch(from var(--status-compliant) l c h / 0.2);
   }
 
   .status-warning {
-    @apply status-badge bg-[oklch(var(--status-warning))]/10 text-[oklch(var(--status-warning))] border border-[oklch(var(--status-warning))]/20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-warning) l c h / 0.1);
+    color: var(--status-warning);
+    border: 1px solid oklch(from var(--status-warning) l c h / 0.2);
   }
 
   .status-violation {
-    @apply status-badge bg-[oklch(var(--status-violation))]/10 text-[oklch(var(--status-violation))] border border-[oklch(var(--status-violation))]/20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-violation) l c h / 0.1);
+    color: var(--status-violation);
+    border: 1px solid oklch(from var(--status-violation) l c h / 0.2);
   }
 
   .status-critical {
-    @apply status-badge bg-[oklch(var(--status-critical))]/10 text-[oklch(var(--status-critical))] border border-[oklch(var(--status-critical))]/20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-critical) l c h / 0.1);
+    color: var(--status-critical);
+    border: 1px solid oklch(from var(--status-critical) l c h / 0.2);
   }
 
   .status-pending {
-    @apply status-badge bg-[oklch(var(--status-pending))]/10 text-[oklch(var(--status-pending))] border border-[oklch(var(--status-pending))]/20;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-pending) l c h / 0.1);
+    color: var(--status-pending);
+    border: 1px solid oklch(from var(--status-pending) l c h / 0.2);
   }
 
   /* Legacy badge support (will be replaced) */
   .badge-critical {
-    @apply status-critical;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-critical) l c h / 0.1);
+    color: var(--status-critical);
+    border: 1px solid oklch(from var(--status-critical) l c h / 0.2);
   }
 
   .badge-warning {
-    @apply status-warning;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-warning) l c h / 0.1);
+    color: var(--status-warning);
+    border: 1px solid oklch(from var(--status-warning) l c h / 0.2);
   }
 
   .badge-clean {
-    @apply status-compliant;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background-color: oklch(from var(--status-compliant) l c h / 0.1);
+    color: var(--status-compliant);
+    border: 1px solid oklch(from var(--status-compliant) l c h / 0.2);
   }
 
   /* Hide scrollbar while keeping scroll functionality */
