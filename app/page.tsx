@@ -377,10 +377,10 @@ export default function LandingPage() {
                     },
                     {
                       source: "NOAA/NWS Precipitation Data",
-                      description: "Observed rainfall for wet weather discharge context",
-                      update: "Real-time API integration",
-                      status: "✓ Functional",
-                      statusColor: "text-green-600",
+                      description: "Observed rainfall for wet weather discharge context in case packets",
+                      update: "API integration (untested)",
+                      status: "⚙ Infrastructure Ready",
+                      statusColor: "text-orange-600",
                     },
                   ].map((item, i) => (
                     <div key={i} className="flex gap-4 pb-4 border-b last:border-0 last:pb-0">
