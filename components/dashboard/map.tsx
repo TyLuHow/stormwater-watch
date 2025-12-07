@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTheme } from "next-themes"
 import { AlertTriangle } from "lucide-react"
 import "mapbox-gl/dist/mapbox-gl.css"
 import type { Facility, ViolationEvent } from "@prisma/client"
@@ -29,6 +30,13 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
   const map = useRef<any | null>(null)
   const [mapboxToken, setMapboxToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const { theme, systemTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+
+  // Avoid hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Fetch token from server endpoint
@@ -44,21 +52,31 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
   }, [])
 
   useEffect(() => {
-    if (!mapContainer.current || !mapboxToken || loading) return
+    if (!mapContainer.current || !mapboxToken || loading || !mounted) return
+
+    // Determine current theme (handle system theme)
+    const currentTheme = theme === 'system' ? systemTheme : theme
+    const isDark = currentTheme === 'dark'
 
     // Dynamically import mapbox-gl
     import("mapbox-gl")
       .then((mapboxModule) => {
         const mapboxgl = mapboxModule.default || mapboxModule
 
-        // Use dark style for better mission control aesthetic
+        // Theme-aware map styles
+        // Dark: mission control aesthetic
+        // Light: outdoors style for better terrain/water visibility
+        const mapStyle = isDark
+          ? "mapbox://styles/mapbox/dark-v11"
+          : "mapbox://styles/mapbox/outdoors-v12"
+
         map.current = new mapboxgl.Map({
           container: mapContainer.current!,
-          style: "mapbox://styles/mapbox/dark-v11",
+          style: mapStyle,
           center: [-119.4179, 36.7783], // Center of California
           zoom: 6,
           attributionControl: false,
-          accessToken: mapboxToken, // Pass token in constructor instead of setting on module
+          accessToken: mapboxToken,
         })
 
         // Add navigation controls
@@ -161,7 +179,7 @@ export function DashboardMap({ facilities, violations }: DashboardMapProps) {
         map.current.remove()
       }
     }
-  }, [facilities, violations, mapboxToken, loading])
+  }, [facilities, violations, mapboxToken, loading, mounted, theme, systemTheme])
 
   if (loading) {
     return (
