@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       startDate: searchParams.get("startDate"),
       endDate: searchParams.get("endDate"),
       qualifier: searchParams.get("qualifier"),
+      locationType: searchParams.get("locationType"),
       sortBy: searchParams.get("sortBy"),
       sortOrder: searchParams.get("sortOrder"),
     })
@@ -62,6 +63,14 @@ export async function GET(request: NextRequest) {
 
     if (params.qualifier) {
       where.qualifier = params.qualifier
+    }
+
+    // Add location type filter
+    if (params.locationType) {
+      where.location = {
+        ...where.location,
+        locationType: params.locationType,
+      }
     }
 
     // Add date range filter
@@ -99,6 +108,8 @@ export async function GET(request: NextRequest) {
         location: {
           select: {
             locationCode: true,
+            locationType: true,
+            locationDesc: true,
             facilityPlaceId: true,
             facility: {
               select: {
@@ -130,6 +141,8 @@ export async function GET(request: NextRequest) {
         id: sample.id,
         locationPlaceId: sample.locationPlaceId,
         locationCode: sample.location.locationCode,
+        locationType: sample.location.locationType,
+        locationDesc: sample.location.locationDesc,
         facilityPlaceId: sample.location.facilityPlaceId,
         facilityName: sample.location.facility.facilityName,
         parameterName: sample.parameter.parameterName,

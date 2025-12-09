@@ -8,6 +8,9 @@ import { CasePacketButton } from "@/components/facilities/case-packet-button"
 import { BackButton } from "@/components/ui/back-button"
 import { AlertTriangle } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
+import { LocationLabel, LocationBadge } from "@/components/monitoring/LocationLabel"
+import { ESMRLocationType } from "@prisma/client"
+import { ViolationTooltip } from "@/components/violations/ViolationTooltip"
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -136,10 +139,14 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
   // Get unique pollutants for charts
   const pollutants: string[] = [...new Set(facility.samples.map((s: Sample) => s.pollutant))]
 
+  // VIOLATIONS-FIRST FACILITY PAGE
+  // Per domain expert feedback: "Violations should be at the top of plant-specific pages"
+  // Structure: violations → exceedances → general monitoring data
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div>
-        <BackButton href="/dashboard" label="Back to Dashboard" />
+        <BackButton href="/dashboard" label="Back to Violations" />
         <h1 className="text-3xl font-bold mt-4">{facility.name}</h1>
         <p className="text-muted-foreground mt-2">{facility.county} County</p>
       </div>
@@ -201,6 +208,124 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
         </Card>
       </div>
 
+      {/* VIOLATIONS FIRST - Active Violations Table */}
+      {facility.violationEvents.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Active Violations</CardTitle>
+            <CardDescription>
+              Exceedances requiring investigation and enforcement action.
+              Each day in violation counts as a separate enforceable violation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pollutant</TableHead>
+                  <TableHead>
+                    <span className="flex items-center gap-1">
+                      Violation Days
+                      <ViolationTooltip type="count" />
+                    </span>
+                  </TableHead>
+                  <TableHead>
+                    <span className="flex items-center gap-1">
+                      Max Exceedance
+                      <ViolationTooltip type="exceedance" />
+                    </span>
+                  </TableHead>
+                  <TableHead>
+                    <span className="flex items-center gap-1">
+                      Period
+                      <ViolationTooltip type="period" />
+                    </span>
+                  </TableHead>
+                  <TableHead>Reporting Year</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {facility.violationEvents.map((v: ViolationEvent) => {
+                  const daysInViolation = Math.floor(
+                    (v.lastDate.getTime() - v.firstDate.getTime()) / (1000 * 60 * 60 * 24)
+                  ) + 1
+                  const isRepeat = v.count >= 3
+
+                  return (
+                    <TableRow key={v.id}>
+                      <TableCell className="font-medium">{v.pollutantKey}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={isRepeat ? "destructive" : "secondary"} className="font-mono">
+                            {v.count}
+                          </Badge>
+                          {isRepeat && (
+                            <Badge variant="outline" className="text-xs flex items-center gap-1">
+                              Repeat
+                              <ViolationTooltip type="repeat" iconClassName="h-3 w-3" />
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={Number(v.maxRatio) > 2 ? "destructive" : "secondary"}>
+                          {Number(v.maxRatio).toFixed(2)}× limit
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <div>
+                          <div>{v.firstDate.toLocaleDateString()} → {v.lastDate.toLocaleDateString()}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            ({daysInViolation} {daysInViolation === 1 ? "day" : "days"})
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{v.reportingYear}</TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Case Packet Generation - High priority for attorneys */}
+      {worstViolation && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Attorney Tools</CardTitle>
+            <CardDescription>Generate attorney-ready case packet for violations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {facility.violationEvents.map((violation: ViolationEvent) => (
+                <div key={violation.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{violation.pollutantKey}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {violation.count} exceedances • Max: {Number(violation.maxRatio).toFixed(2)}× NAL
+                    </p>
+                  </div>
+                  <CasePacketButton
+                    violationEventId={violation.id}
+                    facilityName={facility.name}
+                    permitId={facility.permitId}
+                  />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Charts for each pollutant with violations */}
+      {pollutants.map((pollutant: string) => {
+        const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutantKey === pollutant)
+        if (!violation) return null
+        return <SampleChart key={pollutant} samples={facility.samples as any} pollutant={pollutant} />
+      })}
+
       {/* Location & Enrichment Data */}
       {(facility.county || facility.watershedHuc12 || facility.ms4 || facility.isInDAC) && (
         <Card>
@@ -238,7 +363,8 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
         </Card>
       )}
 
-      {/* eSMR Monitoring Data */}
+      {/* eSMR Monitoring Data - DEPRIORITIZED per expert feedback */}
+      {/* "if someone wants to see eSMR data they can pull data from eSMR directly" */}
       {facility.esmrFacility && (
         <Card>
           <CardHeader>
@@ -278,10 +404,22 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
                 return (
                   <div key={location.locationCode} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold">{location.locationCode}</h4>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold">
+                            <LocationLabel
+                              locationCode={location.locationCode}
+                              locationType={location.locationType as ESMRLocationType}
+                              format="compact"
+                            />
+                          </h4>
+                          <LocationBadge
+                            locationCode={location.locationCode}
+                            locationType={location.locationType as ESMRLocationType}
+                          />
+                        </div>
                         <p className="text-sm text-muted-foreground">
-                          {location.locationType.replace(/_/g, ' ')}
+                          {location.locationCode}
                           {location.latitude && location.longitude && (
                             <> • {typeof location.latitude === 'number' ? location.latitude.toFixed(4) : location.latitude.toNumber().toFixed(4)}, {typeof location.longitude === 'number' ? location.longitude.toFixed(4) : location.longitude.toNumber().toFixed(4)}</>
                           )}
@@ -369,84 +507,7 @@ export default async function FacilityPage({ params }: { params: Promise<{ id: s
         </Card>
       )}
 
-      {/* Charts for each pollutant with violations */}
-      {pollutants.map((pollutant: string) => {
-        const violation = facility.violationEvents.find((v: ViolationEvent) => v.pollutantKey === pollutant)
-        if (!violation) return null
-        return <SampleChart key={pollutant} samples={facility.samples as any} pollutant={pollutant} />
-      })}
-
-      {/* Case Packet Generation */}
-      {worstViolation && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Attorney Tools</CardTitle>
-            <CardDescription>Generate attorney-ready case packet for violations</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {facility.violationEvents.map((violation: ViolationEvent) => (
-                <div key={violation.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <p className="font-medium">{violation.pollutantKey}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {violation.count} exceedances • Max: {Number(violation.maxRatio).toFixed(2)}× NAL
-                    </p>
-                  </div>
-                  <CasePacketButton
-                    violationEventId={violation.id}
-                    facilityName={facility.name}
-                    permitId={facility.permitId}
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {facility.violationEvents.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Violations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pollutant</TableHead>
-                  <TableHead>Count</TableHead>
-                  <TableHead>Max Ratio</TableHead>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Reporting Year</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {facility.violationEvents.map((v: ViolationEvent) => (
-                  <TableRow key={v.id}>
-                    <TableCell className="font-medium">{v.pollutantKey}</TableCell>
-                    <TableCell>
-                      <Badge variant={v.count >= 3 ? "destructive" : "secondary"}>
-                        {v.count} {v.count >= 3 ? " (Repeat)" : ""}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={Number(v.maxRatio) > 2 ? "destructive" : "secondary"}>
-                        {Number(v.maxRatio).toFixed(2)}×
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {v.firstDate.toLocaleDateString()} → {v.lastDate.toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-sm">{v.reportingYear}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
+      {/* Recent Samples - General monitoring data for context */}
       <Card>
         <CardHeader>
           <CardTitle>Recent Samples</CardTitle>

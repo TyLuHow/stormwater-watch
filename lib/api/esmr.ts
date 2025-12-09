@@ -22,6 +22,7 @@ export const SamplesQuerySchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), // YYYY-MM-DD
   qualifier: z.nativeEnum(ESMRQualifier).optional(),
+  locationType: z.nativeEnum(ESMRLocationType).optional(),
   sortBy: z.enum(["samplingDate", "result"]).default("samplingDate"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 })
@@ -99,6 +100,8 @@ export interface SampleListResponse {
     id: string
     locationPlaceId: number
     locationCode: string
+    locationType: ESMRLocationType
+    locationDesc: string | null
     facilityPlaceId: number
     facilityName: string
     parameterName: string

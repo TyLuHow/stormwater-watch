@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MapPin } from "lucide-react"
+import { ViolationTooltip } from "./ViolationTooltip"
 
 interface ViolationCardProps {
   violation: ViolationEvent & { facility: Facility }
@@ -12,6 +13,14 @@ interface ViolationCardProps {
 }
 
 export function ViolationCard({ violation, onDismiss }: ViolationCardProps) {
+  // Calculate days in violation
+  const daysInViolation = Math.floor(
+    (violation.lastDate.getTime() - violation.firstDate.getTime()) / (1000 * 60 * 60 * 24)
+  ) + 1 // Add 1 to include both start and end dates
+
+  // Determine if repeat violation (count >= 3 is heuristic for repeat)
+  const isRepeat = violation.count >= 3
+
   return (
     <Card className={violation.dismissed ? "opacity-50" : ""}>
       <CardHeader>
@@ -22,6 +31,12 @@ export function ViolationCard({ violation, onDismiss }: ViolationCardProps) {
           </div>
           <div className="flex gap-2">
             {violation.impairedWater && <Badge variant="destructive">Impaired Water</Badge>}
+            {isRepeat && (
+              <Badge variant="destructive" className="flex items-center gap-1">
+                Repeat Violation
+                <ViolationTooltip type="repeat" iconClassName="h-3 w-3" />
+              </Badge>
+            )}
             {violation.dismissed && <Badge variant="outline">Dismissed</Badge>}
           </div>
         </div>
@@ -29,17 +44,34 @@ export function ViolationCard({ violation, onDismiss }: ViolationCardProps) {
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Exceedances</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              Violation Count
+              <ViolationTooltip type="count" />
+            </p>
             <p className="text-2xl font-bold">{violation.count}</p>
+            <p className="text-xs text-muted-foreground mt-1">days in violation</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Max Ratio</p>
-            <p className="text-2xl font-bold">{Number(violation.maxRatio).toFixed(2)}x</p>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              Max Exceedance
+              <ViolationTooltip type="exceedance" />
+            </p>
+            <p className="text-2xl font-bold">{Number(violation.maxRatio).toFixed(2)}×</p>
+            <p className="text-xs text-muted-foreground mt-1">times limit</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Period</p>
-            <p className="text-sm">
-              {violation.firstDate.toLocaleDateString()} to {violation.lastDate.toLocaleDateString()}
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              Violation Period
+              <ViolationTooltip type="period" />
+            </p>
+            <p className="text-sm font-medium">
+              {violation.firstDate.toLocaleDateString()}
+            </p>
+            <p className="text-sm font-medium">
+              → {violation.lastDate.toLocaleDateString()}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              ({daysInViolation} day{daysInViolation !== 1 ? "s" : ""})
             </p>
           </div>
         </div>

@@ -17,6 +17,7 @@ import { SampleTable } from "@/components/esmr/sample-table"
 import { Database, Filter, X, Loader2 } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
 import type { SampleListResponse, FacilityListResponse, ParameterListResponse } from "@/lib/api/esmr"
+import { formatLocationDisplay } from "@/lib/monitoring/location-parser"
 
 function SamplesPageContent() {
   const searchParams = useSearchParams()
@@ -128,7 +129,8 @@ function SamplesPageContent() {
         "Date",
         "Time",
         "Facility",
-        "Location",
+        "Location Type",
+        "Location Code",
         "Parameter",
         "Category",
         "Result",
@@ -144,6 +146,7 @@ function SamplesPageContent() {
         sample.samplingDate,
         sample.samplingTime,
         sample.facilityName,
+        formatLocationDisplay(sample.locationCode, sample.locationType, "compact"),
         sample.locationCode,
         sample.parameterName,
         sample.parameterCategory || "",

@@ -14,6 +14,8 @@ import {
   FileText,
   Droplet,
   ChevronDown,
+  Info,
+  Building2,
 } from "lucide-react"
 
 import {
@@ -38,66 +40,45 @@ import {
 } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
-// Navigation items structure (SMARTS-ready with expandable sections)
+// VIOLATIONS-FIRST NAVIGATION STRUCTURE
+// Per domain expert feedback: "I want a way to quickly access hard data related to stormwater violations"
+// Navigation prioritizes violations and exceedances for professional water quality users
+// General eSMR data browsing is deprioritized (users can pull data from eSMR directly if needed)
+
 const navigationItems = [
-  {
-    title: "Overview",
-    icon: LayoutDashboard,
-    href: "/dashboard",
-  },
   {
     title: "Violations",
     icon: AlertTriangle,
-    items: [
-      {
-        title: "eSMR Computed",
-        href: "/dashboard",
-        description: "Water quality violations from monitoring data",
-      },
-      {
-        title: "SMARTS Regulatory",
-        href: "/violations/smarts",
-        description: "Official violation records (coming soon)",
-        badge: "Soon",
-      },
-      {
-        title: "All Violations",
-        href: "/violations",
-        description: "Unified view of all violations",
-      },
-    ],
+    href: "/dashboard",
+    description: "Primary entry point - active violation events and exceedances",
+  },
+  {
+    title: "Facilities",
+    icon: Building2,
+    href: "/facilities",
+    description: "Facility-specific compliance data (violations shown first)",
+    badge: "Soon",
+  },
+  {
+    title: "Alerts",
+    icon: Bell,
+    href: "/subscriptions",
+    description: "Create polygon-based violation alert subscriptions",
   },
   {
     title: "Enforcement",
     icon: Shield,
     items: [
       {
-        title: "Actions",
-        href: "/enforcement/actions",
-        description: "NOVs, penalties, compliance orders",
+        title: "Case Packets",
+        href: "/reports/case-packets",
+        description: "Attorney-ready violation reports",
         badge: "Soon",
       },
       {
-        title: "Inspections",
-        href: "/enforcement/inspections",
-        description: "Inspection history and findings",
-        badge: "Soon",
-      },
-    ],
-  },
-  {
-    title: "Data Sources",
-    icon: Droplet,
-    items: [
-      {
-        title: "eSMR Monitoring",
-        href: "/esmr",
-        description: "Self-reported monitoring data",
-      },
-      {
-        title: "SMARTS Data",
-        href: "/smarts",
-        description: "Regulatory system records (coming soon)",
+        title: "SMARTS Actions",
+        href: "/violations/smarts",
+        description: "Official enforcement records",
         badge: "Soon",
       },
     ],
@@ -109,7 +90,7 @@ const navigationItems = [
       {
         title: "Trends",
         href: "/analytics/trends",
-        description: "Historical patterns and forecasts",
+        description: "Historical violation patterns",
         badge: "Soon",
       },
       {
@@ -121,32 +102,10 @@ const navigationItems = [
     ],
   },
   {
-    title: "Alerts",
-    icon: Bell,
-    href: "/subscriptions",
-  },
-  {
-    title: "Reports",
-    icon: FileText,
-    items: [
-      {
-        title: "Case Packets",
-        href: "/reports/case-packets",
-        description: "Attorney-ready violation reports",
-        badge: "Soon",
-      },
-      {
-        title: "Custom Reports",
-        href: "/reports/custom",
-        description: "Build custom data exports",
-        badge: "Soon",
-      },
-    ],
-  },
-  {
-    title: "Settings",
-    icon: Settings,
-    href: "/settings",
+    title: "About",
+    icon: Info,
+    href: "/about",
+    description: "Mission, features, and data sources",
   },
 ]
 
@@ -156,7 +115,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border px-4 py-4">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Droplet className="h-5 w-5" />
           </div>

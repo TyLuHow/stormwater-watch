@@ -6,8 +6,15 @@ import { StatsCards } from "@/components/dashboard/stats-cards"
 import { DashboardFilters } from "@/components/dashboard/filters"
 import { ESMRStatsCards } from "@/components/dashboard/esmr-stats-cards"
 import { ESMRRecentActivity } from "@/components/dashboard/esmr-recent-activity"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, HelpCircle } from "lucide-react"
 import type { StatsResponse, SampleListResponse } from "@/lib/api/esmr"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+
+// VIOLATIONS DASHBOARD - NOW THE HOMEPAGE
+// Per domain expert feedback: "I want a way to quickly access hard data related to stormwater violations"
+// This page is now the primary entry point for water professionals
+// Homepage (/) redirects here for immediate access to violation data
 
 // Force dynamic rendering to prevent database access during build
 export const dynamic = 'force-dynamic'
@@ -165,6 +172,8 @@ export default async function DashboardPage({
             location: {
               select: {
                 locationCode: true,
+                locationType: true,
+                locationDesc: true,
                 facilityPlaceId: true,
                 facility: { select: { facilityName: true } },
               },
@@ -207,6 +216,8 @@ export default async function DashboardPage({
         id: s.id,
         locationPlaceId: s.locationPlaceId,
         locationCode: s.location.locationCode,
+        locationType: s.location.locationType,
+        locationDesc: s.location.locationDesc,
         facilityPlaceId: s.location.facilityPlaceId,
         facilityName: s.location.facility.facilityName,
         parameterName: s.parameter.parameterName,
@@ -353,9 +364,18 @@ export default async function DashboardPage({
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">Active Violation Events</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-xl">Active Violation Events</CardTitle>
+                <Link href="/help/violations">
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    <span className="sr-only">Learn about violation counting</span>
+                  </Button>
+                </Link>
+              </div>
               <CardDescription className="mt-1">
-                Exceedances requiring investigation and enforcement action
+                Exceedances requiring investigation and enforcement action.
+                Each day in violation counts as a separate enforceable violation.
               </CardDescription>
             </div>
             <div className="text-sm text-muted-foreground">

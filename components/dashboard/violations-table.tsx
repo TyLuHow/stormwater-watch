@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import type { Decimal } from "@prisma/client/runtime/library"
+import { ViolationTooltip } from "@/components/violations/ViolationTooltip"
 
 interface Facility {
   id?: string
@@ -38,8 +39,18 @@ export function ViolationsTable({ violations }: ViolationsTableProps) {
         <TableRow>
           <TableHead>Facility</TableHead>
           <TableHead>Pollutant</TableHead>
-          <TableHead>Count</TableHead>
-          <TableHead>Severity</TableHead>
+          <TableHead>
+            <span className="flex items-center gap-1">
+              Violation Days
+              <ViolationTooltip type="count" />
+            </span>
+          </TableHead>
+          <TableHead>
+            <span className="flex items-center gap-1">
+              Severity
+              <ViolationTooltip type="severity" />
+            </span>
+          </TableHead>
           <TableHead>County</TableHead>
           <TableHead></TableHead>
         </TableRow>
@@ -49,12 +60,22 @@ export function ViolationsTable({ violations }: ViolationsTableProps) {
           const count = violation.count ?? violation.exceedanceCount ?? 0
           const severity = violation.severity ?? "MEDIUM"
           const facilityId = violation.facilityId ?? violation.facility.id
+          const isRepeat = count >= 3
 
           return (
             <TableRow key={violation.id}>
               <TableCell className="font-medium">{violation.facility.name}</TableCell>
               <TableCell>{violation.pollutant}</TableCell>
-              <TableCell>{count}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono">{count}</span>
+                  {isRepeat && (
+                    <Badge variant="outline" className="text-xs">
+                      Repeat
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
               <TableCell>
                 <Badge variant={severity === "HIGH" ? "destructive" : severity === "MEDIUM" ? "default" : "secondary"}>
                   {severity}

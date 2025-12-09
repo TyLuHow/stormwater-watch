@@ -18,6 +18,7 @@ import { ArrowLeft, Building2, MapPin, Droplets, Calendar, TrendingUp } from "lu
 import Link from "next/link"
 import { formatNumber } from "@/lib/utils"
 import type { FacilityDetailResponse, SampleListResponse } from "@/lib/api/esmr"
+import { LocationLabel, LocationBadge } from "@/components/monitoring/LocationLabel"
 
 export default function FacilityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -255,11 +256,23 @@ export default function FacilityDetailPage({ params }: { params: Promise<{ id: s
               {facility.locations.map((location) => (
                 <Card key={location.locationPlaceId}>
                   <CardHeader>
-                    <CardTitle className="text-base">{location.locationCode}</CardTitle>
-                    <CardDescription>
-                      <Badge variant="outline" className="text-xs">
-                        {location.locationType.replace(/_/g, " ")}
-                      </Badge>
+                    <CardTitle className="text-base">
+                      <LocationLabel
+                        locationCode={location.locationCode}
+                        locationType={location.locationType}
+                        format="compact"
+                      />
+                    </CardTitle>
+                    <CardDescription className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <LocationBadge
+                          locationCode={location.locationCode}
+                          locationType={location.locationType}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          {location.locationCode}
+                        </span>
+                      </div>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

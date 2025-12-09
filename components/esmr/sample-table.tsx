@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChevronLeft, ChevronRight, Download } from "lucide-react"
 import { formatNumber } from "@/lib/utils"
 import type { SampleListResponse } from "@/lib/api/esmr"
+import { LocationLabel } from "@/components/monitoring/LocationLabel"
 
 interface SampleTableProps {
   data: SampleListResponse
@@ -99,8 +100,13 @@ export function SampleTable({ data, onPageChange, onExport }: SampleTableProps) 
                 <TableCell className="font-medium max-w-[200px] truncate">
                   {sample.facilityName}
                 </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {sample.locationCode}
+                <TableCell>
+                  <LocationLabel
+                    locationCode={sample.locationCode}
+                    locationType={sample.locationType}
+                    format="stacked"
+                    description={sample.locationDesc}
+                  />
                 </TableCell>
                 <TableCell>{sample.parameterName}</TableCell>
                 <TableCell>
